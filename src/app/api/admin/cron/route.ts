@@ -51,10 +51,20 @@ async function executeCronJobs(job: Job) {
         payload.status = 0;
         payload.responseBody = String(error);
     } finally {
-        payload.finishedAt = new Date();
+        const lastRunAt = new Date();
+        payload.finishedAt = lastRunAt;
         payload.durationMs = payload.finishedAt.getTime() - now.getTime();
 
         await prisma.runningLog.create({ data: payload });
+
+        await prisma.job.update({
+            where: { id: job.id },
+            data: { 
+                lastRunAt: lastRunAt,
+                count: { increment: 1 },
+                failureCount: payload.successful ? { increment: 0 } : { increment: 1 },
+            },
+        });
     }
 }
 
@@ -69,6 +79,6 @@ export async function GET() {
     });
     const jobPromises = dueJobs.map((job) => executeCronJobs(job));
     await Promise.all(jobPromises);
-    
+
     return new Response("Cron job triggered", { status: 200 });
 }
