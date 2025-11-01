@@ -1,13 +1,7 @@
-"use client";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { signIn, signUp, signOut } from "@/lib/auth-client";
 
 export default function Header() {
-    const handleLogin = () => {
-        // Implement login logic here
-
-    }
     return (
         <header className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-[95%] max-w-7xl">
             <nav className="flex items-center justify-between px-6 py-3 bg-card/80 backdrop-blur-lg border border-border rounded-full shadow-lg">
@@ -37,9 +31,11 @@ export default function Header() {
 
                 {/* CTA Buttons */}
                 <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="sm" className="hidden sm:flex">
-                        ログイン
-                    </Button>
+                    <Link href={`/login`}>
+                        <Button variant="ghost" size="sm" className="hidden sm:flex">
+                            ログイン
+                        </Button>
+                    </Link>
                     <Link href={`/signup`}>
                         <Button size="sm">
                             無料で始める
