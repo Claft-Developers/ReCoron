@@ -1,13 +1,14 @@
 "use client";
-
 import { useState } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Github } from "lucide-react";
 import { signUp, signIn } from "@/lib/auth-client";
 import { toast } from "sonner";
+import Link from "next/link";
+
+const redirectURL = "/jobs";
 
 export default function SignupPage() {
     const [email, setEmail] = useState("");
@@ -23,7 +24,7 @@ export default function SignupPage() {
                 email,
                 password,
                 name: email.split("@")[0],
-                callbackURL: "/dashboard",
+                callbackURL: redirectURL,
             });
             toast.success("アカウントが作成されました！");
         } catch (error: any) {
@@ -38,7 +39,7 @@ export default function SignupPage() {
         try {
             await signIn.social({
                 provider,
-                callbackURL: "/dashboard",
+                callbackURL: redirectURL,
             });
         } catch (error: any) {
             console.error("Social signup error:", error);
