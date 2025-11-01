@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { PricingCard } from "@/components/pricing/pricing-card";
 
+export function generateMetadata() {
+    return {
+        title: "Pricing - ReCoron",
+        description: "Explore ReCoron's pricing plans. Choose from free to Pro plans to suit your needs.",
+    };
+}
+
 export default function PricingPage() {
     return (
         <div className="min-h-screen bg-black text-white">
