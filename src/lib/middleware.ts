@@ -5,12 +5,18 @@ import { auth } from "./auth";
 import { unauthorizedResponse } from "../utils/response";
 
 // ハンドラー関数のオーバーロード定義
+interface Context {
+    params: Promise<{ [key: string]: string }>;
+}
+
 type AuthHandler = {
-    (req: NextRequest, type: "session", payload: Session): Promise<Response>;
-    (req: NextRequest, type: "token", payload: Record<string, any>): Promise<Response>;
+    (req: NextRequest, type: "session", payload: Session, context?: Context): Promise<Response>;
+    (req: NextRequest, type: "token", payload: Record<string, any>, context?: Context): Promise<Response>;
 };
 
-export async function withAuth(req: NextRequest, handler: AuthHandler) {
+
+
+export async function withAuth(req: NextRequest, handler: AuthHandler, context?: Context) {
     const token = req.headers.get("Authorization")?.replace("Bearer ", "");
     
     if (!token) {
@@ -18,7 +24,7 @@ export async function withAuth(req: NextRequest, handler: AuthHandler) {
             headers: req.headers,
         });
         if (session) {
-            return handler(req, "session", session);
+            return handler(req, "session", session, context);
         }
         return unauthorizedResponse();
     }
@@ -29,5 +35,5 @@ export async function withAuth(req: NextRequest, handler: AuthHandler) {
         return unauthorizedResponse("無効なトークンです");
     }
     
-    return handler(req, "token", payload);
+    return handler(req, "token", payload, context);
 }
