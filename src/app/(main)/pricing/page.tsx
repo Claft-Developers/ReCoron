@@ -2,6 +2,7 @@ import { PRICING_TIERS, ALL_FEATURES } from "@/constants/plan";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
 import { PricingCard } from "@/components/pricing/pricing-card";
+import { FAQSection } from "@/components/pricing/faq-section";
 
 export function generateMetadata() {
     return {
@@ -85,52 +86,7 @@ export default function PricingPage() {
             </section>
 
             {/* FAQ Section */}
-            <section className="container mx-auto px-4 pb-24">
-                <h2 className="text-3xl font-bold text-center mb-12">よくある質問</h2>
-                
-                <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="border border-white/10 rounded-xl p-6 bg-white/[0.02]">
-                        <h3 className="text-xl font-semibold mb-3">無料プランでどのくらい使えますか？</h3>
-                        <p className="text-gray-400">
-                            無料プランでは、月間30回のジョブ実行と5つのジョブ登録が可能です。
-                            60分毎のスケジューリング間隔で、小規模なプロジェクトに最適です。
-                        </p>
-                    </div>
-
-                    <div className="border border-white/10 rounded-xl p-6 bg-white/[0.02]">
-                        <h3 className="text-xl font-semibold mb-3">Proプランの従量課金はどのように計算されますか？</h3>
-                        <p className="text-gray-400">
-                            Proプランでは、月額$10の基本料金で1,000回の実行が含まれます。
-                            それを超えた場合、1実行あたり$0.005が追加で課金されます。
-                            例: 1,500回実行の場合 = $10 + (500 × $0.005) = $12.50/月
-                        </p>
-                    </div>
-
-                    <div className="border border-white/10 rounded-xl p-6 bg-white/[0.02]">
-                        <h3 className="text-xl font-semibold mb-3">プランはいつでも変更できますか？</h3>
-                        <p className="text-gray-400">
-                            はい、プランはいつでも変更可能です。アップグレードは即座に反映され、
-                            ダウングレードは次の請求サイクルから適用されます。
-                        </p>
-                    </div>
-
-                    <div className="border border-white/10 rounded-xl p-6 bg-white/[0.02]">
-                        <h3 className="text-xl font-semibold mb-3">支払い方法は何がありますか？</h3>
-                        <p className="text-gray-400">
-                            クレジットカード（Visa、MasterCard、American Express）に対応しています。
-                            すべての支払いはStripeを通じて安全に処理されます。
-                        </p>
-                    </div>
-
-                    <div className="border border-white/10 rounded-xl p-6 bg-white/[0.02]">
-                        <h3 className="text-xl font-semibold mb-3">ジョブ実行が失敗した場合も課金されますか？</h3>
-                        <p className="text-gray-400">
-                            いいえ、実際に成功したジョブ実行のみが課金対象となります。
-                            リトライや失敗したジョブは課金されません。
-                        </p>
-                    </div>
-                </div>
-            </section>
+            <FAQSection />
 
             {/* CTA Section */}
             <section className="container mx-auto px-4 pb-24 text-center">
