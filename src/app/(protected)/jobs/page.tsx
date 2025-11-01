@@ -1,58 +1,22 @@
-"use client";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { headers } from "next/headers";
 import { Plus, Play, Pause, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { auth } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { formatDate } from "@/utils/date";
+import Link from "next/link";
 
-// ダミーデータ
-const DUMMY_JOBS = [
-    {
-        id: "1",
-        name: "Daily Backup",
-        url: "https://api.example.com/backup",
-        method: "POST",
-        schedule: "0 0 * * *",
-        enabled: true,
-        lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2時間前
-        nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 22), // 22時間後
-        count: 45,
-        failureCount: 2,
-    },
-    {
-        id: "2",
-        name: "Weekly Report",
-        url: "https://api.example.com/report",
-        method: "GET",
-        schedule: "0 9 * * 1",
-        enabled: true,
-        lastRunAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3), // 3日前
-        nextRunAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 4), // 4日後
-        count: 12,
-        failureCount: 0,
-    },
-    {
-        id: "3",
-        name: "Health Check",
-        url: "https://api.example.com/health",
-        method: "GET",
-        schedule: "*/15 * * * *",
-        enabled: false,
-        lastRunAt: new Date(Date.now() - 1000 * 60 * 60), // 1時間前
-        nextRunAt: null,
-        count: 2880,
-        failureCount: 15,
-    },
-];
 
-export default function JobsPage() {
-    const [jobs] = useState(DUMMY_JOBS);
+export default async function JobsPage() {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+    const jobs = await prisma.job.findMany({
+        where: { userId: session!.user.id },
+        orderBy: { lastRunAt: "desc" },
+    });
 
-    const formatDate = (date: Date | null) => {
-        if (!date) return "-";
-        return new Intl.RelativeTimeFormat("ja", { numeric: "auto" }).format(
-            Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-            "day"
-        );
-    };
+    
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -66,10 +30,12 @@ export default function JobsPage() {
                                 スケジュールされたタスクを管理
                             </p>
                         </div>
-                        <Button className="bg-white text-black hover:bg-gray-200">
-                            <Plus className="w-4 h-4 mr-2" />
-                            新しいジョブ
-                        </Button>
+                        <Link href="/jobs/new">
+                            <Button className="bg-white text-black hover:bg-gray-200">
+                                <Plus className="w-4 h-4 mr-2" />
+                                新しいジョブ
+                            </Button>
+                        </Link>
                     </div>
                 </div>
             </div>
