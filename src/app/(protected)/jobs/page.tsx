@@ -1,11 +1,10 @@
 import { headers } from "next/headers";
-import { Plus, Play, Pause, Trash2, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { Plus, Clock } from "lucide-react";
+import { JobTableRow } from "@/components/job/job-table-row";
 import { Button } from "@/components/ui/button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDate } from "@/utils/date";
 import Link from "next/link";
-
 
 export default async function JobsPage() {
     const session = await auth.api.getSession({
@@ -16,7 +15,6 @@ export default async function JobsPage() {
         orderBy: { lastRunAt: "desc" },
     });
 
-    
 
     return (
         <div className="min-h-screen bg-black text-white">
@@ -87,7 +85,7 @@ export default async function JobsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {jobs.map((job) => (
+                                {/* {jobs.map((job) => (
                                     <tr
                                         key={job.id}
                                         className="border-b border-white/5 hover:bg-white/[0.02] transition-colors"
@@ -168,6 +166,9 @@ export default async function JobsPage() {
                                             </div>
                                         </td>
                                     </tr>
+                                ))} */}
+                                {jobs.map((job) => (
+                                    <JobTableRow key={job.id} job={job} />
                                 ))}
                             </tbody>
                         </table>
@@ -186,10 +187,12 @@ export default async function JobsPage() {
                         <p className="text-gray-400 mb-6">
                             最初のCron Jobを作成して、タスクを自動化しましょう
                         </p>
-                        <Button className="bg-white text-black hover:bg-gray-200">
-                            <Plus className="w-4 h-4 mr-2" />
-                            新しいジョブを作成
-                        </Button>
+                        <Link href="/jobs/new">
+                            <Button className="bg-white text-black hover:bg-gray-200">
+                                <Plus className="w-4 h-4 mr-2" />
+                                新しいジョブを作成
+                            </Button>
+                        </Link>
                     </div>
                 )}
             </div>
