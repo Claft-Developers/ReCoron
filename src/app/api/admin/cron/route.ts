@@ -31,6 +31,8 @@ async function executeCronJobs(job: Job) {
         status: 0,
         durationMs: 0,
 
+        successful: false,
+
         startedAt: new Date(),
         finishedAt: new Date(),
     };
@@ -44,6 +46,7 @@ async function executeCronJobs(job: Job) {
         payload.status = response.status;
         payload.responseHeaders = Object.fromEntries(response.headers.entries());
         payload.responseBody = await response.text();
+        payload.successful = true;
 
         console.log(`Job ${job.id} executed with status: ${response.status}`);
     } catch (error) {
