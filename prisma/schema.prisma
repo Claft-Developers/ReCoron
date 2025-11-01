@@ -35,6 +35,7 @@ model Job {
 
   name     String
   schedule String
+  timezone String   @default("Asia/Tokyo")
 
   url     String
   method  Method  @default(GET)
