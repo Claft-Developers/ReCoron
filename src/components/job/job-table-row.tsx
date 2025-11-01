@@ -20,7 +20,8 @@ export function JobTableRow({ job }: JobTableRowProps) {
 
     const handleToggleEnabled = async () => {
         setIsToggling(true);
-        toast.loading("ジョブを更新しています...", { id: "toggle-job" });
+        const toastId = `toggle-job-${job.id}`;
+        toast.loading("ジョブを更新しています...", { id: toastId });
         try {
             const response = await fetch(`/api/jobs/${job.id}`, {
                 method: "PATCH",
@@ -33,15 +34,14 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 throw new Error(error.error || "ジョブの更新に失敗しました");
             }
 
-            toast.success(job.enabled ? "ジョブを停止しました" : "ジョブを有効化しました", { id: "toggle-job" });
+            toast.success(job.enabled ? "ジョブを停止しました" : "ジョブを有効化しました", { id: toastId });
+            router.refresh();
         } catch (error) {
             console.error("Failed to toggle job:", error);
             const message = error instanceof Error ? error.message : null;
-            toast.error("ジョブの更新に失敗しました", { description: message, id: "toggle-job" });
+            toast.error("ジョブの更新に失敗しました", { description: message, id: toastId });
         } finally {
             setIsToggling(false);
-            toast.dismiss("toggle-job");
-            router.refresh();
         }
     };
 
@@ -51,7 +51,8 @@ export function JobTableRow({ job }: JobTableRowProps) {
         }
 
         setIsDeleting(true);
-        toast.loading("ジョブを削除しています...", { id: "delete-job" });
+        const toastId = `delete-job-${job.id}`;
+        toast.loading("ジョブを削除しています...", { id: toastId });
         try {
             const response = await fetch(`/api/jobs/${job.id}`, {
                 method: "DELETE",
@@ -62,38 +63,36 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 throw new Error(error.error || "ジョブの削除に失敗しました");
             }
 
-            toast.success("ジョブを削除しました", { id: "delete-job" });
+            toast.success("ジョブを削除しました", { id: toastId });
+            router.refresh();
         } catch (error) {
             console.error("Failed to delete job:", error);
             const message = error instanceof Error ? error.message : null;
-            toast.error("ジョブの削除に失敗しました", { description: message, id: "delete-job" });
+            toast.error("ジョブの削除に失敗しました", { description: message, id: toastId });
         } finally {
             setIsDeleting(false);
-            toast.dismiss("delete-job");
-            router.refresh();
         }
     };
 
     const handleRunNow = async () => {
+        const toastId = `run-job-${job.id}`;
+        toast.loading("ジョブを実行しています...", { id: toastId });
         try {
             const response = await fetch(`/api/jobs/${job.id}/run`, {
                 method: "POST",
             });
-            toast.loading("ジョブを実行しています...", { id: "run-job" });
 
             if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.error || "ジョブの実行に失敗しました");
             }
 
-            toast.success("ジョブを実行しました", { id: "run-job" });
+            toast.success("ジョブを実行しました", { id: toastId });
+            router.refresh();
         } catch (error) {
             console.error("Failed to run job:", error);
             const message = error instanceof Error ? error.message : null;
-            toast.error("ジョブの実行に失敗しました", { description: message, id: "run-job" });
-        } finally {
-            toast.dismiss("run-job");
-            router.refresh();
+            toast.error("ジョブの実行に失敗しました", { description: message, id: toastId });
         }
     };
 
