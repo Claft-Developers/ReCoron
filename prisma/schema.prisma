@@ -59,7 +59,10 @@ model Job {
 model RunningLog {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  jobId     String
+  jobId     String   
+
+  startedAt      DateTime
+  finishedAt     DateTime @default(now())
 
   url             String
   status          Int
