@@ -13,6 +13,20 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Plan {
+  FREE
+  BASIC
+  PRO
+}
+
+enum Method {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+}
+
 model Job {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -23,7 +37,7 @@ model Job {
   schedule String
 
   url     String
-  method  String  @default("POST")
+  method  Method  @default(GET)
   headers Json?
   body    String?
 
@@ -33,19 +47,29 @@ model Job {
 
   failureCount Int @default(0)
   count        Int @default(0)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runningLogs RunningLog[]
+
+  @@index([userId])
+  @@index([enabled, nextRunAt])
 }
 
 model RunningLog {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   jobId     String
-  userId    String
 
   url             String
   status          Int
   responseBody    String?
   responseHeaders Json?
   durationMs      Int
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([createdAt])
 }
 
 model User {
@@ -58,6 +82,9 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+
+  plan Plan @default(FREE)
+  jobs Job[]
 
   @@unique([email])
   @@map("user")
