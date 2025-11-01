@@ -66,6 +66,8 @@ model RunningLog {
   responseHeaders Json?
   durationMs      Int
 
+  successful Boolean @default(true)
+
   job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
