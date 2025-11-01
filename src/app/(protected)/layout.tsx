@@ -1,0 +1,33 @@
+import { Geist, Geist_Mono } from "next/font/google";
+import "@/styles/globals.css";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+
+    if (!session) {
+        redirect("/signup");
+    }
+
+    return (
+        <html lang="ja" className="dark">
+            <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+                {children}
+            </body>
+        </html>
+    );
+}
