@@ -3,6 +3,7 @@ import "@/styles/globals.css";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { Sidebar } from "@/components/layout/sidebar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     return (
         <html lang="ja" className="dark">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                {children}
+                <Sidebar />
+                <main className="ml-64">
+                    {children}
+                </main>
             </body>
         </html>
     );
