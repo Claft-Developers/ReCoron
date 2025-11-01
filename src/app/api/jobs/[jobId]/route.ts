@@ -56,3 +56,31 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
         return serverErrorResponse();
     }
 }, context));
+
+export const PATCH = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
+    try {
+        const { jobId } = await context!.params;
+        const userId = type === "session"
+            ? payload.user.id
+            : (payload as Record<string, any>).userId as string;
+        const job = await prisma.job.findUnique({
+            where: { id: jobId, userId },
+        });
+
+        if (!job) {
+            return notFoundResponse("ジョブが見つかりません");
+        }
+
+        const updateData = await req.json();
+
+        const updatedJob = await prisma.job.update({
+            where: { id: jobId, userId },
+            data: updateData,
+        });
+
+        return successResponse(updatedJob);
+    } catch (error) {
+        console.error("Failed to update job:", error);
+        return serverErrorResponse();
+    }
+}, context));
