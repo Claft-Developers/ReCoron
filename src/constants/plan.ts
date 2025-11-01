@@ -13,6 +13,7 @@ const ALL_FEATURES = [
 
 const PRICING_TIERS = [
     {
+        id: "free",
         title: "Free",
         price: "$0",
         description: "まずは試してみたい方に",
@@ -28,8 +29,16 @@ const PRICING_TIERS = [
             monitoring: { included: false },
             support: { included: true, value: "GitHub Issue" },
         },
+
+        limit: {
+            maxJobs: 3,
+            maxExecutions: 100,
+            maxScheduling: 60,
+            maxApiCalls: 50,
+        }
     },
     {
+        id: "hobby",
         title: "Hobby",
         price: "$3/月",
         description: "個人開発者向けお手頃プラン",
@@ -38,16 +47,23 @@ const PRICING_TIERS = [
         features: {
             jobs: { included: true, value: "15個" },
             executions: { included: true, value: "無制限" },
-            scheduling: { included: true, value: "5分毎" },
+            scheduling: { included: true, value: "15分毎" },
             dynamicJobs: { included: true, value: "完全対応" },
-            apiCalls: { included: true, value: "500回/日" },
+            apiCalls: { included: true, value: "150回/日" },
             logs: { included: true, value: "7日間" },
             webhook: { included: true },
             monitoring: { included: true, value: "基本監視" },
             support: { included: true, value: "Discord" },
         },
+        limit: {
+            maxJobs: 15,
+            maxExecutions: Infinity,
+            maxScheduling: 15,
+            maxApiCalls: 500,
+        }
     },
     {
+        id: "pro",
         title: "Pro",
         price: "$10/月 + 従量課金",
         description: "本格的なサービス運用向け",
@@ -63,6 +79,12 @@ const PRICING_TIERS = [
             monitoring: { included: true, value: "高度な監視 + アラート" },
             support: { included: true, value: "メールサポート" },
         },
+        limit: {
+            maxJobs: 50,
+            maxExecutions: Infinity,
+            maxScheduling: 1,
+            maxApiCalls: 5000,
+        }
     }
 ];
 
