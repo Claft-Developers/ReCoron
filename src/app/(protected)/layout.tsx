@@ -1,9 +1,10 @@
 import { Geist, Geist_Mono } from "next/font/google";
-import "@/styles/globals.css";
-import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { Sidebar } from "@/components/layout/sidebar";
+import { Toaster } from "@/components/ui/sonner";
+import { auth } from "@/lib/auth";
+import "@/styles/globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
                     {children}
                 </main>
             </body>
+
+            <Toaster position="bottom-right" />
         </html>
     );
 }
