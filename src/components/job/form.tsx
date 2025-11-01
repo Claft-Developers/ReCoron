@@ -39,7 +39,8 @@ export function CreateJobForm() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
-        toast.loading("ジョブを作成中です...", { id: "create-job" });
+        const toastId = "create-job";
+        toast.loading("ジョブを作成中です...", { id: toastId });
 
         try {
             const response = await fetch("/api/jobs", {
@@ -60,16 +61,15 @@ export function CreateJobForm() {
                 throw new Error(data.error);
             }
 
-            toast.success("ジョブを作成しました", { id: "create-job" });
+            toast.success("ジョブを作成しました", { id: toastId, description: undefined });
             router.push("/jobs");
             router.refresh();
         } catch (error) {
             console.error("Failed to create job:", error);
             const message = error instanceof Error ? error.message : null;
-            toast.error("ジョブの作成に失敗しました", { description: message, id: "create-job" });
+            toast.error("ジョブの作成に失敗しました", { description: message, id: toastId });
         } finally {
             setIsSubmitting(false);
-            toast.dismiss("create-job");
         }
     };
 

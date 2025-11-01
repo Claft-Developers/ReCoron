@@ -34,7 +34,7 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 throw new Error(error.error || "ジョブの更新に失敗しました");
             }
 
-            toast.success(job.enabled ? "ジョブを停止しました" : "ジョブを有効化しました", { id: toastId });
+            toast.success(job.enabled ? "ジョブを停止しました" : "ジョブを有効化しました", { id: toastId, description: undefined });
             router.refresh();
         } catch (error) {
             console.error("Failed to toggle job:", error);
@@ -63,7 +63,7 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 throw new Error(error.error || "ジョブの削除に失敗しました");
             }
 
-            toast.success("ジョブを削除しました", { id: toastId });
+            toast.success("ジョブを削除しました", { id: toastId, description: undefined });
             router.refresh();
         } catch (error) {
             console.error("Failed to delete job:", error);
@@ -87,7 +87,7 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 throw new Error(error.error || "ジョブの実行に失敗しました");
             }
 
-            toast.success("ジョブを実行しました", { id: toastId });
+            toast.success("ジョブを実行しました", { id: toastId, description: undefined });
             router.refresh();
         } catch (error) {
             console.error("Failed to run job:", error);
