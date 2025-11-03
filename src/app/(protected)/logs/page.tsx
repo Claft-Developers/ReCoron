@@ -9,14 +9,17 @@ import Link from "next/link";
 interface Context {
     searchParams: Promise<{
         jobId?: string;
+        page?: string;
     }>;
 }
 
 export default async function CronLogsPage(context: Context) {
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-    const params = await context.searchParams;
+    const [session, params] = await Promise.all([
+        auth.api.getSession({
+            headers: await headers(),
+        }),
+        context.searchParams,
+    ]);
     const jobId = params.jobId;
     const userId = session!.user.id;
 
@@ -31,7 +34,7 @@ export default async function CronLogsPage(context: Context) {
         where: {
             job: {
                 userId,
-                ...(jobId && { id: jobId }),
+                // ...(jobId && { id: jobId }),
             },
         },
         include: {
@@ -46,6 +49,7 @@ export default async function CronLogsPage(context: Context) {
         orderBy: { finishedAt: "desc" },
         take: 100, // 最新100件まで
     });
+    console.log("logs:", logs);
 
     // 統計情報の計算
     const totalLogs = logs.length;
