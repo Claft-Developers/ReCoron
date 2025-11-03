@@ -1,4 +1,5 @@
 import { type NextRequest } from "next/server";
+import { executeCronJob } from "@/lib/job";
 import { prisma } from "@/lib/prisma";
 import { withAuth } from "@/lib/middleware";
 import {
@@ -23,28 +24,11 @@ export const POST = ((req: NextRequest, context: Context) => withAuth(req, async
         if (!job) {
             return notFoundResponse("ジョブが見つかりません");
         }
-        const uri = job.url;
-        const headers = (job.headers || {}) as Record<string, string>;
-        const body = job.body || undefined;
-
-        const response = await fetch(uri, {
-            method: job.method,
-            headers,
-            body,
-        });
-        const responseBody = await response.text();
-        const status = response.status;
-        const responseHeaders = Object.fromEntries(response.headers.entries());
-        const responseData = {
-            status,
-            headers: responseHeaders,
-            body: responseBody,
-            ok: response.ok,
-        };
+        const result = await executeCronJob(job, "MANUAL");
 
         return successResponse({
-            response: responseData,
             job,
+            result,
         });
     } catch (error) {
         console.error("Failed to get job:", error);
