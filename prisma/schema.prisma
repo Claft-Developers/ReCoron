@@ -27,6 +27,11 @@ enum Method {
   PATCH
 }
 
+enum Type {
+  AUTO
+  MANUAL
+}
+
 model Job {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -60,6 +65,7 @@ model RunningLog {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   jobId     String   
+  type      Type     @default(AUTO)
 
   startedAt      DateTime
   finishedAt     DateTime @default(now())
