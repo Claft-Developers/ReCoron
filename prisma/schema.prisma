@@ -64,7 +64,7 @@ model Job {
 model RunningLog {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  jobId     String   
+  jobId     String?   
   type      Type     @default(AUTO)
 
   startedAt      DateTime
@@ -78,7 +78,8 @@ model RunningLog {
 
   successful Boolean @default(true)
 
-  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  job Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  jobRaw Json? @map("job_raw")
 
   @@index([jobId])
   @@index([createdAt])
