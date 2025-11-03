@@ -1,7 +1,9 @@
+import { Prisma } from "@prisma/client";
 import { CronExpressionParser } from "cron-parser";
 import { prisma } from "@/lib/prisma";
 import { Job } from "@prisma/client";
-import { Prisma } from "@prisma/client";
+import pLimit from "p-limit";
+
 
 async function executeCronJobs(job: Job) {
     const now = new Date();
@@ -74,13 +76,14 @@ async function executeCronJobs(job: Job) {
 export async function GET() {
     // ここに Cron ジョブのロジックを実装
     const now = new Date();
+    const limit = pLimit(5); // 同時実行数を5に制限
     const dueJobs = await prisma.job.findMany({
         where: {
             nextRunAt: { lte: now },
             enabled: true,
         },
     });
-    const jobPromises = dueJobs.map((job) => executeCronJobs(job));
+    const jobPromises = dueJobs.map((job) => limit(() => executeCronJobs(job)));
     await Promise.all(jobPromises);
 
     return new Response("Cron job triggered", { status: 200 });
