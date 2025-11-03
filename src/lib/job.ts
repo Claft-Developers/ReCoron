@@ -13,10 +13,12 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
     const nextRun = interval.next().toDate();
 
     // ジョブの次回実行時刻を更新
-    await prisma.job.update({
-        where: { id: job.id },
-        data: { nextRunAt: nextRun }
-    });
+    if (type === Type.AUTO) {
+        await prisma.job.update({
+            where: { id: job.id },
+            data: { nextRunAt: nextRun }
+        });
+    }
 
     
     const url = job.url;
