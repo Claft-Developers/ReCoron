@@ -11,7 +11,7 @@ interface Context {
     params: Promise<{ [key: string]: string }>;
 }
 
-export const GET = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
+export const POST = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
     try {
         const { jobId } = await context!.params;
         const userId = type === "session"
