@@ -27,7 +27,8 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
 
     const payload: Prisma.RunningLogCreateInput = {
         job: { connect: { id: job.id } },
-        
+        user: { connect: { id: job.userId } },
+
         url,
         responseHeaders: {},
         responseBody: "",
