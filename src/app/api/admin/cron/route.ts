@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { Job } from "@prisma/client";
 import pLimit from "p-limit";
 
+const TIMEOUT = 10 * 1000; // 10秒
+
 
 async function executeCronJobs(job: Job) {
     const now = new Date();
@@ -40,11 +42,19 @@ async function executeCronJobs(job: Job) {
     };
 
     try {
+        // タイムアウト設定 (30秒)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), TIMEOUT);
+
         const response = await fetch(url, {
             method: job.method,
             headers: headers,
             body: body,
+            signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
+
         payload.status = response.status;
         payload.responseHeaders = Object.fromEntries(response.headers.entries());
         payload.responseBody = await response.text();
@@ -54,7 +64,11 @@ async function executeCronJobs(job: Job) {
     } catch (error) {
         console.error(`Job ${job.id} execution failed:`, error);
         payload.status = 0;
-        payload.responseBody = String(error);
+        if (error instanceof Error && error.name === 'AbortError') {
+            payload.responseBody = `Request timeout (${TIMEOUT / 1000}s)`;
+        } else {
+            payload.responseBody = String(error);
+        }
     } finally {
         const lastRunAt = new Date();
         payload.finishedAt = lastRunAt;
