@@ -64,7 +64,8 @@ model Job {
 model RunningLog {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
-  jobId     String?   
+  jobId     String?  
+  userId    String   @map("user_id")
   type      Type     @default(AUTO)
 
   startedAt      DateTime
@@ -80,6 +81,7 @@ model RunningLog {
 
   job Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
   jobRaw Json? @map("job_raw")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
   @@index([createdAt])
@@ -98,6 +100,7 @@ model User {
 
   plan Plan @default(FREE)
   jobs Job[]
+  logs RunningLog[]
 
   @@unique([email])
   @@map("user")
