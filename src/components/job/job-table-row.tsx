@@ -78,7 +78,7 @@ export function JobTableRow({ job }: JobTableRowProps) {
         const toastId = `run-job-${job.id}`;
         toast.loading("ジョブを実行しています...", { id: toastId });
         try {
-            const response = await fetch(`/api/jobs/${job.id}/run`, {
+            const response = await fetch(`/api/jobs/${job.id}/execute`, {
                 method: "POST",
             });
 
