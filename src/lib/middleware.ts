@@ -1,3 +1,4 @@
+import type { APIKeyPayload } from "@/types/key";
 import type { Session } from "@/types/session";
 import { NextRequest } from "next/server";
 import { verifyJWT } from "@/utils/token";
@@ -11,7 +12,7 @@ interface Context {
 
 type AuthHandler = {
     (req: NextRequest, type: "session", payload: Session, context?: Context): Promise<Response>;
-    (req: NextRequest, type: "token", payload: Record<string, any>, context?: Context): Promise<Response>;
+    (req: NextRequest, type: "token", payload: APIKeyPayload, context?: Context): Promise<Response>;
 };
 
 
