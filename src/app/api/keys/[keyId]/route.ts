@@ -56,3 +56,31 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
         return serverErrorResponse();
     }
 }, context));
+
+export const PUT = ((req: NextRequest, context: Context) => withAuth(req, async (req, payload, context) => {
+    try {
+        const { keyId } = await context!.params;
+        const auth = getAuth(payload);
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("write:keys")) {
+                return unauthorizedResponse("このAPIキーにはキー更新の権限がありません");
+            }
+        }
+        const body = await req.json();
+        const updatedKey = await prisma.aPIKey.updateMany({
+            where: { id: keyId, user: { id: auth.userId } },
+            data: {
+                name: body.name,
+                scopes: body.scopes,
+            },
+        });
+        if (updatedKey.count > 0) {
+            return successResponse(null, "APIキーが更新されました");
+        }
+        return notFoundResponse("APIキーが見つかりません");
+    } catch (error) {
+        console.error("Failed to update API key:", error);
+        return serverErrorResponse();
+    }
+}, context));
