@@ -63,8 +63,8 @@ export function PricingCard({
             <Button
                 className={`w-full cursor-pointer font-semibold transition-all ${
                     popular
-                        ? "bg-white text-black hover:bg-gray-100 hover:shadow-lg hover:scale-[1.02] shadow-md"
-                        : "bg-white/50 text-black hover:bg-white hover:shadow-lg hover:scale-[1.02]"
+                        ? "bg-black text-white hover:bg-white hover:text-black hover:shadow-lg hover:scale-[1.02] border border-white/20"
+                        : "bg-black text-white hover:bg-white hover:text-black hover:shadow-lg hover:scale-[1.02] border border-white/20"
                 }`}
             >
                 {cta}
