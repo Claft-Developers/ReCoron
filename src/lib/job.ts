@@ -2,7 +2,7 @@ import { Prisma, Job, Type, User, Method } from "@prisma/client";
 import { CronExpressionParser } from "cron-parser";
 import { PRICING_TIERS } from "@/constants/plan";
 import { prisma } from "@/lib/prisma";
-import { count } from "console";
+import { checkJobExecutionLimit } from "@/utils/limits";
 
 const TIMEOUT = 10 * 1000; // 10秒
 
@@ -14,6 +14,27 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
     });
     const nextRun = interval.next().toDate();
 
+    if (!job.enabled) {
+        console.log(`Job ${job.id} is disabled. Skipping execution.`);
+        return {
+            jobId: job.id,
+            skipped: true,
+            reason: "Job is disabled"
+        };
+    }
+    const user = await prisma.user.findUnique({
+        where: { id: job.userId },
+        select: { plan: true }
+    });
+    const willExecute = checkJobExecutionLimit(job, user!.plan);
+    if (!willExecute) {
+        console.log(`Job ${job.id} has reached execution limit for plan ${user!.plan}. Skipping execution.`);
+        return {
+            jobId: job.id,
+            skipped: true,
+            reason: "Execution limit reached for current plan"
+        };
+    }
 
     const url = job.url;
     const headers = (job.headers || {}) as Record<string, string>;
@@ -68,11 +89,19 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         payload.finishedAt = lastRunAt;
         payload.durationMs = payload.finishedAt.getTime() - now.getTime();
         
-        const updatePayload = {
+        
+        const updatePayload: Prisma.JobUpdateInput = {
             lastRunAt,
-        }
+        };
+        
+        // 自動実行の場合のみnextRunAtを更新
         if (type === Type.AUTO) {
-            Object.assign(updatePayload, { nextRunAt: nextRun });
+            updatePayload.nextRunAt = nextRun;
+        }
+        
+        // 成功した場合のみカウントをインクリメント
+        if (payload.successful) {
+            updatePayload.count = { increment: 1 };
         }
 
         void (async () => { // 非同期で実行
