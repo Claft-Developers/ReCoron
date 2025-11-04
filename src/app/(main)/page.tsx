@@ -1,5 +1,6 @@
 import { ArrowRight, CheckCircle2, Clock, Zap, Code, Bell, Shield, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function Home() {
   return (
@@ -24,11 +25,11 @@ export default function Home() {
             </p>
             <div className="mt-10 flex items-center justify-center gap-4 flex-wrap">
               <Button size="lg" className="text-base h-12 px-8">
-                今すぐ始める
+                <Link href="/signup">今すぐ始める</Link>
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button size="lg" variant="outline" className="text-base h-12 px-8">
-                ドキュメントを見る
+                <Link href="/docs">ドキュメントを見る</Link>
               </Button>
             </div>
           </div>
