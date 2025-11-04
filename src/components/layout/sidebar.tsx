@@ -10,7 +10,8 @@ import {
   KeyRound,
   LogOut,
   ArrowUpDown,
-  Logs
+  Logs,
+  ScrollText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "@/lib/auth-client";
@@ -18,8 +19,9 @@ import { signOut, useSession } from "@/lib/auth-client";
 const navigation = [
   { name: "Home", href: "/jobs", icon: Home },
   { name: "Jobs", href: "/jobs", icon: Clock },
+  { name: "Job Logs", href: "/jobs/logs", icon: Logs },
   { name: "API Keys", href: "/keys", icon: KeyRound },
-  { name: "Logs", href: "/logs", icon: Logs },
+  { name: "API Logs", href: "/keys/logs", icon: ScrollText },
   { name: "Webhooks", href: "/webhooks", icon: ArrowUpDown },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
