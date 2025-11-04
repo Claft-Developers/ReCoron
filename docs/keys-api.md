@@ -9,6 +9,7 @@ APIキーの管理を行うAPIです。
 | GET | `/api/keys` | APIキー一覧の取得 | `read:keys` |
 | POST | `/api/keys` | APIキーの作成 | `write:keys` |
 | GET | `/api/keys/{keyId}` | 特定のAPIキーの取得 | `read:keys` |
+| PUT | `/api/keys/{keyId}` | APIキーの更新 | `write:keys` |
 | DELETE | `/api/keys/{keyId}` | APIキーの削除 | `write:keys` |
 
 ---
@@ -150,6 +151,53 @@ curl -X GET https://your-domain.com/api/keys/key_xxxxx \
   }
 }
 ```
+
+---
+
+## APIキーの更新
+
+既存のAPIキーの名前と権限を更新します。
+
+**Endpoint:** `PUT /api/keys/{keyId}`
+
+**必要なスコープ:** `write:keys`
+
+**リクエストボディ:**
+```json
+{
+  "name": "Updated API Key",
+  "scopes": ["read:jobs", "write:jobs"]
+}
+```
+
+**フィールド説明:**
+
+| フィールド | 型 | 必須 | 説明 |
+|-----------|------|------|------|
+| name | string | ✓ | 新しいAPIキー名 |
+| scopes | string[] | ✓ | 新しいスコープのリスト |
+
+**リクエスト例:**
+```bash
+curl -X PUT https://your-domain.com/api/keys/key_xxxxx \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Production API Key",
+    "scopes": ["read:jobs", "write:jobs"]
+  }'
+```
+
+**レスポンス例:**
+```json
+{
+  "success": true,
+  "message": "APIキーが更新されました",
+  "data": null
+}
+```
+
+⚠️ **注意:** APIキーの更新では、トークン自体は変更されません。トークンを再生成したい場合は、新しいキーを作成して古いキーを削除してください。
 
 ---
 
