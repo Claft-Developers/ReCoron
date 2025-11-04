@@ -11,10 +11,11 @@ interface Context {
     params: Promise<{ [key: string]: string }>;
 }
 
-type AuthHandler = {
-    (req: NextRequest, type: "session", payload: Session, context?: Context): Promise<Response>;
-    (req: NextRequest, type: "token", payload: APIKeyPayload, context?: Context): Promise<Response>;
-};
+type AuthHandler = (
+    req: NextRequest, 
+    payload: Session | APIKeyPayload, 
+    context?: Context
+) => Promise<Response>;
 
 
 
@@ -87,7 +88,7 @@ export async function withAuth(req: NextRequest, handler: AuthHandler, context?:
             });
         }
 
-        return handler(req, "token", payload, context);
+        return handler(req, payload, context);
     }
     
     // セッション認証にフォールバック
@@ -96,7 +97,7 @@ export async function withAuth(req: NextRequest, handler: AuthHandler, context?:
     });
     
     if (session) {
-        return handler(req, "session", session, context);
+        return handler(req, session, context);
     }
     
     return unauthorizedResponse("認証が必要です");
