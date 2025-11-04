@@ -5,14 +5,6 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/prisma";
 
-console.log("Auth config:", {
-    hasDatabase: !!prisma,
-    baseURL: process.env.BETTER_AUTH_URL,
-    hasSecret: !!process.env.BETTER_AUTH_SECRET,
-    githubClientId: !!process.env.GITHUB_CLIENT_ID,
-    googleClientId: !!process.env.GOOGLE_CLIENT_ID,
-});
-
 export const auth = betterAuth({
     // DB アダプタ（Prisma）
     database: prismaAdapter(prisma, { provider: "postgresql" }),
