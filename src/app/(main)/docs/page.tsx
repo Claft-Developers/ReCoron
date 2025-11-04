@@ -16,29 +16,9 @@ export default async function DocsPage() {
             href="/docs/api"
             className="block p-6 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all"
           >
-            <h2 className="text-2xl font-semibold mb-2">📚 API Reference</h2>
+            <h2 className="text-2xl font-semibold mb-2">📚 API Documentation</h2>
             <p className="text-gray-400">
               完全なAPI仕様とリファレンス
-            </p>
-          </Link>
-
-          <Link
-            href="/docs/getting-started"
-            className="block p-6 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all"
-          >
-            <h2 className="text-2xl font-semibold mb-2">🚀 クイックスタート</h2>
-            <p className="text-gray-400">
-              ReCoronの始め方ガイド
-            </p>
-          </Link>
-
-          <Link
-            href="/docs/guides"
-            className="block p-6 rounded-lg border border-white/10 hover:border-white/20 hover:bg-white/5 transition-all"
-          >
-            <h2 className="text-2xl font-semibold mb-2">📖 ガイド</h2>
-            <p className="text-gray-400">
-              詳細な使い方とベストプラクティス
             </p>
           </Link>
 
