@@ -1,15 +1,19 @@
-import type { Prisma, Job } from "@prisma/client";
-import { CronExpressionParser } from "cron-parser";
+import { NextRequest } from "next/server";
 import { executeCronJob } from "@/lib/job";
 import { prisma } from "@/lib/prisma";
 import {
     successResponse,
-    serverErrorResponse,
+    unauthorizedResponse
 } from "@/utils/response";
-
 import pLimit from "p-limit";
 
-export async function GET() {
+const TOKEN = process.env.CRON_SECRET;
+
+export async function GET(req: NextRequest) {
+    const token = req.nextUrl.searchParams.get("token");
+    if (token !== TOKEN) {
+        return unauthorizedResponse("Invalid cron token");
+    }
     // ここに Cron ジョブのロジックを実装
     const now = new Date();
     const limit = pLimit(5); // 同時実行数を5に制限
