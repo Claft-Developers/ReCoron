@@ -32,6 +32,7 @@ export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
                     <thead className="border-b border-white/10">
                         <tr className="text-left text-sm text-gray-400">
                             <th className="px-6 py-4 font-medium">ステータス</th>
+                            <th className="px-6 py-4 font-medium">実行タイプ</th>
                             {showJobName && <th className="px-6 py-4 font-medium">ジョブ名</th>}
                             <th className="px-6 py-4 font-medium">URL</th>
                             <th className="px-6 py-4 font-medium">実行時刻</th>
@@ -60,6 +61,15 @@ export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
                                                     <span className="text-sm">失敗</span>
                                                 </div>
                                             )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                                            log.type === "AUTO" 
+                                                ? "bg-blue-500/10 text-blue-400 border border-blue-500/20" 
+                                                : "bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                        }`}>
+                                            {log.type === "AUTO" ? "自動" : "手動"}
                                         </div>
                                     </td>
                                     {showJobName && (
@@ -132,7 +142,7 @@ export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
                                 </tr>
                                 {expandedLog === log.id && (
                                     <tr className="bg-white/[0.01] border-b border-white/5">
-                                        <td colSpan={showJobName ? 7 : 6} className="px-6 py-4">
+                                        <td colSpan={showJobName ? 8 : 7} className="px-6 py-4">
                                             <div className="space-y-4">
                                                 {/* Response Headers */}
                                                 {log.responseHeaders && (
