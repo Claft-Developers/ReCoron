@@ -1,3 +1,5 @@
+import { APIKeyPayload } from "@/types/key";
+import { Session } from "@/types/session";
 import { NextRequest } from "next/server";
 import { Method } from "@prisma/client";
 import { CronExpressionParser } from "cron-parser";
@@ -11,14 +13,15 @@ import {
     unauthorizedResponse,
     serverErrorResponse,
 } from "@/utils/response";
+import { getAuth } from "@/lib/auth";
+
 
 
 export const POST = ((req: NextRequest) => withAuth(req, async (req, type, payload) => {
     try {
         // ユーザーIDを取得
-        const userId = type === "session" 
-            ? payload.user.id 
-            : (payload as Record<string, any>).userId as string;
+        const auth = getAuth(payload);
+        const userId = auth.userId;
 
         const [user, body] = await Promise.all([
             prisma.user.findUnique({
@@ -31,6 +34,13 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, type, paylo
         if (!user) {
             return unauthorizedResponse("ユーザーアカウントが存在しません");
         }
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("write:jobs")) {
+                return unauthorizedResponse("このAPIキーにはジョブ作成の権限がありません");
+            }
+        }
+
         const planInfo = PRICING_TIERS.find(plan => plan.id.toUpperCase() === user.plan)!;
 
         if (user.jobs.length >= planInfo.limit.maxJobs) {
@@ -111,13 +121,18 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, type, paylo
 export const GET = ((req: NextRequest) => withAuth(req, async (_, type, payload) => {
     try {
         // ユーザーIDを取得
-        const userId = type === "session" 
-            ? payload.user.id 
-            : (payload as Record<string, any>).userId as string;
+        const auth = getAuth(payload);
+        
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("read:jobs")) {
+                return unauthorizedResponse("このAPIキーにはジョブ読み取りの権限がありません");
+            }
+        }
 
         const jobs = await prisma.job.findMany({
             where: {
-                userId,
+                userId: auth.userId,
             },
             orderBy: {
                 createdAt: "desc",

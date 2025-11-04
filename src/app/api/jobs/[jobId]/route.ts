@@ -1,3 +1,4 @@
+import { APIKeyPayload } from "@/types/key";
 import { NextRequest } from "next/server";
 import { withAuth } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
@@ -5,7 +6,9 @@ import {
     successResponse,
     serverErrorResponse,
     notFoundResponse,
+    unauthorizedResponse,
 } from "@/utils/response";
+import { getAuth } from "@/lib/auth";
 
 interface Context {
     params: Promise<{ [key: string]: string }>;
@@ -14,12 +17,17 @@ interface Context {
 export const GET = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
     try {
         const { jobId } = await context!.params;
-        const userId = type === "session"
-            ? payload.user.id
-            : (payload as Record<string, any>).userId as string;
+        const auth = getAuth(payload);
+
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("read:jobs")) {
+                return unauthorizedResponse("このAPIキーにはジョブ読み取りの権限がありません");
+            }
+        }
 
         const job = await prisma.job.findUnique({
-            where: { id: jobId, userId },
+            where: { id: jobId, userId: auth.userId },
         });
         if (job) {
             return successResponse(job);
@@ -35,11 +43,17 @@ export const GET = ((req: NextRequest, context: Context) => withAuth(req, async 
 export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
     try {
         const { jobId } = await context!.params;
-        const userId = type === "session"
-            ? payload.user.id
-            : (payload as Record<string, any>).userId as string;
+        const auth = getAuth(payload);
+
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("write:jobs")) {
+                return unauthorizedResponse("このAPIキーにはジョブ削除の権限がありません");
+            }
+        }
+
         const job = await prisma.job.findUnique({
-            where: { id: jobId, userId },
+            where: { id: jobId, userId: auth.userId },
         });
 
         if (!job) {
@@ -47,7 +61,7 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
         }
 
         await prisma.job.delete({
-            where: { id: jobId, userId },
+            where: { id: jobId, userId: auth.userId },
         });
 
         return successResponse("ジョブを削除しました");
@@ -60,11 +74,17 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
 export const PATCH = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
     try {
         const { jobId } = await context!.params;
-        const userId = type === "session"
-            ? payload.user.id
-            : (payload as Record<string, any>).userId as string;
+        const auth = getAuth(payload);
+
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("write:jobs")) {
+                return unauthorizedResponse("このAPIキーにはジョブ更新の権限がありません");
+            }
+        }
+
         const job = await prisma.job.findUnique({
-            where: { id: jobId, userId },
+            where: { id: jobId, userId: auth.userId },
         });
 
         if (!job) {
@@ -74,7 +94,7 @@ export const PATCH = ((req: NextRequest, context: Context) => withAuth(req, asyn
         const updateData = await req.json();
 
         const updatedJob = await prisma.job.update({
-            where: { id: jobId, userId },
+            where: { id: jobId, userId: auth.userId },
             data: updateData,
         });
 

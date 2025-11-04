@@ -1,3 +1,4 @@
+import { APIKeyPayload } from "@/types/key";
 import { type NextRequest } from "next/server";
 import { executeCronJob } from "@/lib/job";
 import { prisma } from "@/lib/prisma";
@@ -6,7 +7,9 @@ import {
     successResponse,
     serverErrorResponse,
     notFoundResponse,
+    unauthorizedResponse,
 } from "@/utils/response";
+import { getAuth } from "@/lib/auth";
 
 interface Context {
     params: Promise<{ [key: string]: string }>;
@@ -15,11 +18,17 @@ interface Context {
 export const POST = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
     try {
         const { jobId } = await context!.params;
-        const userId = type === "session"
-            ? payload.user.id
-            : (payload as Record<string, any>).userId as string;
+        const auth = getAuth(payload);
+
+        if (auth.type === "apiKey") {
+            const scopes = (auth.payload as APIKeyPayload).scopes;
+            if (!scopes.includes("write:jobs")) {
+                return unauthorizedResponse("このAPIキーにはジョブ実行の権限がありません");
+            }
+        }
+
         const job = await prisma.job.findUnique({
-            where: { id: jobId, userId },
+            where: { id: jobId, userId: auth.userId },
         });
         if (!job) {
             return notFoundResponse("ジョブが見つかりません");
