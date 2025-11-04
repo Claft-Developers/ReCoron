@@ -1,5 +1,8 @@
 import { NextRequest } from "next/server";
+import { headers } from "next/headers";
 import { Plan } from "@prisma/client";
+import { auth } from "@/lib/auth";
+import { isAdmin } from "@/lib/admin-middleware";
 import {
     successResponse,
     validationErrorResponse,
@@ -17,15 +20,26 @@ import {
  * 管理者用: ユーザーのプラン変更をシミュレート
  * GET /api/admin/plan?userId=xxx&plan=HOBBY
  * 
- * 注意: この実装では簡易的な認証チェックのみです。
- * 本番環境では適切な管理者認証を実装してください。
+ * 認証: セッション認証（管理者のみ）または X-Admin-Token ヘッダー
  */
 export async function GET(req: NextRequest) {
     try {
-        // TODO: 管理者認証チェックを実装
-        const adminToken = req.headers.get('X-Admin-Token');
-        if (adminToken !== process.env.ADMIN_SECRET_TOKEN) {
-            return unauthorizedResponse('管理者権限が必要です');
+        // セッション認証を試みる
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (session) {
+            // セッション認証の場合、管理者チェック
+            if (!isAdmin(session.user.email)) {
+                return unauthorizedResponse('管理者権限が必要です');
+            }
+        } else {
+            // セッションがない場合、トークン認証にフォールバック
+            const adminToken = req.headers.get('X-Admin-Token');
+            if (adminToken !== process.env.ADMIN_SECRET_TOKEN) {
+                return unauthorizedResponse('管理者権限が必要です');
+            }
         }
 
         const { searchParams } = new URL(req.url);
@@ -52,18 +66,28 @@ export async function GET(req: NextRequest) {
 /**
  * 管理者用: ユーザーのプランを変更
  * POST /api/admin/plan
- * Headers: X-Admin-Token: xxx
  * Body: { userId: "xxx", plan: "HOBBY" }
  * 
- * 注意: この実装では簡易的な認証チェックのみです。
- * 本番環境では適切な管理者認証を実装してください。
+ * 認証: セッション認証（管理者のみ）または X-Admin-Token ヘッダー
  */
 export async function POST(req: NextRequest) {
     try {
-        // TODO: 管理者認証チェックを実装
-        const adminToken = req.headers.get('X-Admin-Token');
-        if (adminToken !== process.env.ADMIN_SECRET_TOKEN) {
-            return unauthorizedResponse('管理者権限が必要です');
+        // セッション認証を試みる
+        const session = await auth.api.getSession({
+            headers: await headers(),
+        });
+
+        if (session) {
+            // セッション認証の場合、管理者チェック
+            if (!isAdmin(session.user.email)) {
+                return unauthorizedResponse('管理者権限が必要です');
+            }
+        } else {
+            // セッションがない場合、トークン認証にフォールバック
+            const adminToken = req.headers.get('X-Admin-Token');
+            if (adminToken !== process.env.ADMIN_SECRET_TOKEN) {
+                return unauthorizedResponse('管理者権限が必要です');
+            }
         }
 
         const body = await req.json();

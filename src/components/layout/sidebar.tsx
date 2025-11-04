@@ -11,10 +11,12 @@ import {
   LogOut,
   ArrowUpDown,
   Logs,
-  ScrollText
+  ScrollText,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "@/lib/auth-client";
+import { useMemo } from "react";
 
 const navigation = [
   { name: "Home", href: "/jobs", icon: Home },
@@ -44,6 +46,13 @@ export function Sidebar() {
   const userEmail = session?.user?.email || "user@example.com";
   const userName = session?.user?.name || "ユーザー";
   const userInitial = userName.charAt(0).toUpperCase();
+
+  // 管理者チェック
+  const isAdminUser = useMemo(() => {
+    if (!session?.user?.email) return false;
+    const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
+    return adminEmails.includes(session.user.email);
+  }, [session?.user?.email]);
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-gray-3 bg-gray-1">
@@ -75,6 +84,23 @@ export function Sidebar() {
               </Link>
             );
           })}
+
+          {/* 管理者専用リンク */}
+          {isAdminUser && (
+            <div className="border-t border-gray-3 pt-2 mt-2">
+              <Link
+                href="/admin"
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  pathname === '/admin'
+                    ? "bg-gray-4 text-gray-12"
+                    : "text-gray-11 hover:bg-gray-3 hover:text-gray-12"
+                }`}
+              >
+                <Shield className="h-5 w-5" />
+                管理者パネル
+              </Link>
+            </div>
+          )}
         </nav>
 
         {/* Bottom Navigation */}

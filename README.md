@@ -10,7 +10,9 @@
 - 🔑 **APIキー認証** - セキュアなプログラマティックアクセス
 - 🔐 **セキュアな認証** - GitHub/Google OAuth + メール/パスワード
 - 📈 **使用量追跡** - 削除されたリソースも含む完全な使用履歴
-- 🌐 **RESTful API** - 完全なAPI仕様でプログラマブル
+- � **プラン管理** - ダウングレード時の自動リソース無効化
+- 🔧 **管理者パネル** - ユーザー管理とシステム統計
+- �🌐 **RESTful API** - 完全なAPI仕様でプログラマブル
 
 ## � ドキュメント
 
@@ -20,6 +22,7 @@
   - [Jobs API](https://your-domain.com/docs/api/jobs) - ジョブ管理API
   - [Keys API](https://your-domain.com/docs/api/keys) - APIキー管理API
   - [Usage API](https://your-domain.com/docs/api/usage) - 使用量追跡と統計情報
+  - [Plan API](https://your-domain.com/docs/api/plan) - プラン管理と変更
   - [サンプルコード](https://your-domain.com/docs/api/examples) - Node.js、Python、cURL、TypeScriptの実装例
 
 ## 🛠️ 技術スタック
@@ -141,6 +144,11 @@ GITHUB_CLIENT_SECRET=your-github-client-secret
 # Google OAuth
 GOOGLE_CLIENT_ID=your-google-client-id
 GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+# Admin Configuration
+ADMIN_SECRET_TOKEN=your-admin-secret-token
+ADMIN_EMAILS=admin@example.com,admin2@example.com
+NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com,admin2@example.com
 ```
 
 ### 開発サーバーの起動
@@ -235,6 +243,53 @@ ReCoronはBetter Authを使用した認証システムを実装しています�
 3. **セッション管理**: Prismaアダプターでデータベースに保存
 4. **保護されたルート**: `(protected)`グループでSSR認証チェック
 
+## 🔧 管理者パネル
+
+ReCoronには管理者向けの強力な管理パネルが用意されています。
+
+### アクセス方法
+
+1. **環境変数の設定**:
+   ```bash
+   ADMIN_EMAILS=admin@example.com,admin2@example.com
+   NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com,admin2@example.com
+   ```
+
+2. **管理者メールアドレスでログイン**
+
+3. **サイドバーから「管理者パネル」にアクセス** (`/admin`)
+
+### 機能
+
+- 📊 **システム統計**: 総ユーザー数、ジョブ数、APIキー数、実行回数
+- 📈 **プラン分布**: プランごとのユーザー数を可視化
+- 👥 **ユーザー管理**: 全ユーザーの一覧とプラン情報
+- 🎯 **プラン変更**: ユーザーのプランを変更（シミュレーション機能付き）
+- ⚠️ **自動無効化**: ダウングレード時に制限を超えるリソースを自動無効化
+- 🔍 **詳細レポート**: 無効化されるリソースとその理由を事前確認
+
+### API認証（プログラマティックアクセス）
+
+管理者APIにプログラマティックにアクセスする場合：
+
+```bash
+# 統計情報を取得
+curl -X GET https://your-domain.com/api/admin/stats \
+  -H "X-Admin-Token: YOUR_ADMIN_SECRET_TOKEN"
+
+# プラン変更をシミュレート
+curl -X GET "https://your-domain.com/api/admin/plan?userId=USER_ID&plan=PRO" \
+  -H "X-Admin-Token: YOUR_ADMIN_SECRET_TOKEN"
+
+# プランを変更
+curl -X POST https://your-domain.com/api/admin/plan \
+  -H "X-Admin-Token: YOUR_ADMIN_SECRET_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"userId": "USER_ID", "plan": "HOBBY"}'
+```
+
+環境変数 `ADMIN_SECRET_TOKEN` を設定してください。
+
 ## 🗄️ データベーススキーマ
 
 ### 主要なモデル
@@ -275,7 +330,15 @@ ReCoronはBetter Authを使用した認証システムを実装しています�
 ### Usage API
 - `GET /api/usage` - 使用量統計取得
 
-### 管理
+### Plan API
+- `GET /api/plan/simulate` - プラン変更シミュレーション
+- `POST /api/plan` - プラン変更実行
+
+### 管理者API
+- `GET /api/admin/stats` - システム統計取得
+- `GET /api/admin/users` - ユーザー一覧取得
+- `GET /api/admin/plan` - ユーザープラン変更シミュレーション
+- `POST /api/admin/plan` - ユーザープラン変更実行
 - `POST /api/admin/cron` - Cron実行エンドポイント（内部用）
 
 詳細な仕様、リクエスト/レスポンス例、サンプルコードは[APIドキュメント](https://your-domain.com/docs/api)をご覧ください。
