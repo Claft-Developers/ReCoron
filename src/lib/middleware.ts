@@ -1,10 +1,12 @@
+import { Method } from "@prisma/client";
+import { NextRequest } from "next/server";
 import type { APIKeyPayload } from "@/types/key";
 import type { Session } from "@/types/session";
-import { NextRequest } from "next/server";
 import { verifyJWT, hashToken } from "@/utils/token";
 import { prisma } from "./prisma";
 import { auth } from "./auth";
-import { unauthorizedResponse } from "../utils/response";
+import { unauthorizedResponse } from "@/utils/response";
+import { checkApiCallLimit } from "@/utils/limits";
 
 // ハンドラー関数のオーバーロード定義
 interface Context {
@@ -12,8 +14,8 @@ interface Context {
 }
 
 type AuthHandler = (
-    req: NextRequest, 
-    payload: Session | APIKeyPayload, 
+    req: NextRequest,
+    payload: Session | APIKeyPayload,
     context?: Context
 ) => Promise<Response>;
 
@@ -21,7 +23,7 @@ type AuthHandler = (
 
 export async function withAuth(req: NextRequest, handler: AuthHandler, context?: Context) {
     const authHeader = req.headers.get("Authorization");
-    
+
     // Authorizationヘッダーの検証
     if (authHeader) {
         // Bearer形式のチェック
@@ -42,63 +44,97 @@ export async function withAuth(req: NextRequest, handler: AuthHandler, context?:
             return unauthorizedResponse("無効なJWT形式です");
         }
 
-        // トークンの検証
-        const payload = await verifyJWT(token);
+        // トークンの検証とハッシュ化を並列実行
+        const [payload, keyHash] = await Promise.all([
+            verifyJWT(token),
+            hashToken(token)
+        ]);
+
         if (!payload) {
             return unauthorizedResponse("無効または期限切れのトークンです");
         }
 
         // APIキーが存在するか確認
-        const keyHash = await hashToken(token);
         const apiKey = await prisma.aPIKey.findUnique({
             where: { keyHash },
-            select: { 
-                id: true, 
-                enabled: true, 
+            select: {
+                id: true,
+                enabled: true,
                 userId: true,
                 expiresAt: true,
                 lastUsed: true,
             },
         });
 
-        // APIキーの存在確認
-        if (!apiKey) {
-            return unauthorizedResponse("APIキーが見つかりません");
-        }
-
-        // 有効化状態の確認
-        if (!apiKey.enabled) {
-            return unauthorizedResponse("このAPIキーは無効化されています");
-        }
-
-        // 有効期限の確認
+        // APIキーの有効性チェック
+        if (!apiKey) return unauthorizedResponse("APIキーが見つかりません");
+        if (!apiKey.enabled) return unauthorizedResponse("このAPIキーは無効化されています");
         if (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date()) {
             return unauthorizedResponse("このAPIキーは期限切れです");
         }
+        
+        // APIコール制限のチェック
+        const isAllowed = await checkApiCallLimit(apiKey.userId);
+        if (!isAllowed) {
+            return unauthorizedResponse("APIコール制限を超えました");
+        }
+
+        // ログ作成と最終使用日時更新を非同期で実行（レスポンスをブロックしない）
+        // これらの処理は await せずに Promise として実行
+        const updatePromises: Promise<any>[] = [];
+
+        // ログに保存（非同期、エラーは無視）
+        const reqCopy = req.clone();
+        const logPromise = reqCopy.text().then(body => {
+            return prisma.aPILog.create({
+                data: {
+                    apiKey: { connect: { id: apiKey.id } },
+                    method: req.method.toUpperCase() as Method,
+                    url: req.url,
+                    requestHeaders: Object.fromEntries(req.headers.entries()),
+                    requestBody: body,
+                }
+            });
+        }).catch(err => {
+            console.error("Failed to create API log:", err);
+        });
+        updatePromises.push(logPromise);
 
         // 最終使用日時を更新（非同期で実行、レスポンスをブロックしない）
         // 頻繁な更新を避けるため、最終使用が1時間以上前の場合のみ更新
-        const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-        if (!apiKey.lastUsed || new Date(apiKey.lastUsed) < oneHourAgo) {
-            prisma.aPIKey.update({
-                where: { id: apiKey.id },
-                data: { lastUsed: new Date() },
-            }).catch(err => {
-                console.error("Failed to update lastUsed:", err);
-            });
-        }
+        const updatePromise = prisma.aPIKey.update({
+            where: { id: apiKey.id },
+            data: { 
+                lastUsed: new Date(),
+                count: { increment: 1 }
+            },
+        }).catch(err => {
+            console.error("Failed to update lastUsed:", err);
+        });
+        updatePromises.push(updatePromise);
 
-        return handler(req, payload, context);
+        // Promise を作成（実行開始）
+        const backgroundTasks = Promise.all(updatePromises);
+
+        // ハンドラーを実行
+        const response = await handler(req, payload, context);
+
+        // バックグラウンドタスクを確認（エラーだけキャッチ）
+        backgroundTasks.catch((err) => {
+            console.error("Background tasks failed:", err);
+        });
+
+        return response;
     }
-    
+
     // セッション認証にフォールバック
     const session = await auth.api.getSession({
         headers: req.headers,
     });
-    
+
     if (session) {
         return handler(req, session, context);
     }
-    
+
     return unauthorizedResponse("認証が必要です");
 }
