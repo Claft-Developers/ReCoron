@@ -10,15 +10,16 @@ export default async function JobsPage() {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
-    const jobs = await prisma.job.findMany({
-        where: { userId: session!.user.id },
-        include: {
-            runningLogs: { 
-                select: { id: true, successful: true },
-            }
-        },
-        orderBy: { lastRunAt: "desc" },
-    });
+    const [jobs, logs] = await Promise.all([
+        prisma.job.findMany({
+            where: { userId: session!.user.id },
+            orderBy: { lastRunAt: "desc" },
+        }),
+        prisma.runningLog.findMany({
+            where: { user: { id: session!.user.id } },
+            orderBy: { startedAt: "desc" },
+        })
+    ])
 
 
     return (
@@ -60,13 +61,13 @@ export default async function JobsPage() {
                         <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
                             <div className="text-sm text-gray-400 mb-1">総実行回数</div>
                             <div className="text-3xl font-bold">
-                                {jobs.reduce((sum, j) => sum + j.runningLogs.length, 0)}
+                                {logs.length}
                             </div>
                         </div>
                         <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
                             <div className="text-sm text-gray-400 mb-1">失敗回数</div>
                             <div className="text-3xl font-bold text-red-500">
-                                {jobs.reduce((sum, j) => sum + j.runningLogs.filter(log => !log.successful).length, 0)}
+                                {logs.filter(log => !log.successful).length}
                             </div>
                         </div>
                     </div>
