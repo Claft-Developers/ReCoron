@@ -7,7 +7,6 @@ import { withAuth } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
 import {
     createdResponse,
-    successResponse,
     validationErrorResponse,
     unauthorizedResponse,
     serverErrorResponse,

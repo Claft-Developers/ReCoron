@@ -1,7 +1,5 @@
 import { APIKeyPayload } from "@/types/key";
 import { NextRequest } from "next/server";
-import { Method } from "@prisma/client";
-import { CronExpressionParser } from "cron-parser";
 import { PRICING_TIERS } from "@/constants/plan";
 import { withAuth } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
