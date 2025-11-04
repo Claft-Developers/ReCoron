@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { ArrowLeft, Activity } from "lucide-react";
 import { LogsTable } from "@/components/job/log-table";
+import { LogFilter } from "@/components/job/log-filter";
 import { Button } from "@/components/ui/button";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -9,7 +10,7 @@ import Link from "next/link";
 interface Context {
     searchParams: Promise<{
         jobId?: string;
-        page?: string;
+        type?: "auto" | "manual";
     }>;
 }
 
@@ -22,12 +23,13 @@ export default async function CronLogsPage(context: Context) {
     ]);
     const jobId = params.jobId;
     const userId = session!.user.id;
+    const type = params.type;
 
-    const [job, logs] = await Promise.all([
+    const [job, logs, allJobs] = await Promise.all([
         jobId ? prisma.job.findUnique({
             where: {
                 id: jobId ? jobId : undefined,
-                userId: userId
+                userId: userId,
             }
         }) : Promise.resolve(null),
 
@@ -35,6 +37,7 @@ export default async function CronLogsPage(context: Context) {
             where: {
                 ...(jobId && { jobId: jobId }),  // jobIdがある場合のみ追加
                 user: { id: userId },
+                ...(type && { type: type.toUpperCase() as "AUTO" | "MANUAL" }), // typeがある場合のみ追加
             },
             include: {
                 job: {
@@ -47,6 +50,12 @@ export default async function CronLogsPage(context: Context) {
             },
             orderBy: { finishedAt: "desc" },
             take: 100, // 最新100件まで
+        }),
+
+        prisma.job.findMany({
+            where: { userId: userId },
+            select: { id: true, name: true },
+            orderBy: { name: "asc" },
         })
     ]);
     console.log("logs:", logs);
@@ -118,6 +127,11 @@ export default async function CronLogsPage(context: Context) {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Filter */}
+            <div className="px-8 py-6 border-b border-white/10">
+                <LogFilter jobs={allJobs} />
             </div>
 
             {/* Logs Table */}
