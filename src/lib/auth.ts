@@ -1,3 +1,5 @@
+import { APIKeyPayload } from "@/types/key";
+import { Session } from "@/types/session";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
@@ -40,3 +42,17 @@ export const auth = betterAuth({
     baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
     secret: process.env.BETTER_AUTH_SECRET || "fallback-secret-key-for-development-only",
 });
+
+export function getAuth(payload: Session | APIKeyPayload): {
+    userId: string;
+    payload: Session | APIKeyPayload;
+    type: "session" | "apiKey";
+} {
+    const isAPIKey = "keyId" in payload;
+    
+    return {
+        userId: isAPIKey ? payload.userId : payload.user.id,
+        payload: payload,
+        type: isAPIKey ? "apiKey" : "session"
+    };
+}
