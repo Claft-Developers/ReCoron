@@ -20,9 +20,21 @@ ReCoron APIは、Cron Jobの管理とAPIキーの管理を提供するRESTful AP
 Authorization: Bearer <your-api-token>
 ```
 
-## エラーレスポンス
+## レスポンス形式
 
-すべてのエラーレスポンスは以下の形式で返されます：
+すべてのAPIレスポンスは統一された形式で返されます。
+
+### 成功レスポンス
+
+```json
+{
+  "success": true,
+  "message": "success",
+  "data": { ... }
+}
+```
+
+### エラーレスポンス
 
 ```json
 {
@@ -301,6 +313,103 @@ curl -X POST https://your-domain.com/api/jobs/cm2u8n9a50000xxxxxx/execute \
 
 ---
 
+### ジョブの一括作成
+
+複数のジョブを一度に作成します。
+
+**Endpoint:** `POST /api/jobs/batch`
+
+**必要なスコープ:** `write:jobs`
+
+**リクエストボディ:**
+```json
+[
+  {
+    "name": "Daily Report",
+    "url": "https://api.example.com/report",
+    "method": "POST",
+    "schedule": "0 9 * * *",
+    "timezone": "Asia/Tokyo"
+  },
+  {
+    "name": "Hourly Check",
+    "url": "https://api.example.com/check",
+    "method": "GET",
+    "schedule": "0 * * * *",
+    "timezone": "Asia/Tokyo"
+  }
+]
+```
+
+**リクエスト例:**
+```bash
+curl -X POST https://your-domain.com/api/jobs/batch \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "name": "Daily Report",
+      "url": "https://api.example.com/report",
+      "method": "POST",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "name": "Hourly Check",
+      "url": "https://api.example.com/check",
+      "method": "GET",
+      "schedule": "0 * * * *"
+    }
+  ]'
+```
+
+**レスポンス例:**
+```json
+{
+  "success": true,
+  "message": "2 件のジョブを作成しました",
+  "data": {
+    "count": 2,
+    "jobs": [
+      {
+        "id": "cm2u8n9a50000xxxxxx",
+        "name": "Daily Report",
+        "url": "https://api.example.com/report",
+        "method": "POST",
+        "schedule": "0 9 * * *",
+        "timezone": "Asia/Tokyo",
+        "enabled": true,
+        "nextRunAt": "2025-11-05T09:00:00.000Z",
+        "createdAt": "2025-11-04T10:00:00.000Z"
+      },
+      {
+        "id": "cm2u8n9a50001xxxxxx",
+        "name": "Hourly Check",
+        "url": "https://api.example.com/check",
+        "method": "GET",
+        "schedule": "0 * * * *",
+        "timezone": "Asia/Tokyo",
+        "enabled": true,
+        "nextRunAt": "2025-11-04T11:00:00.000Z",
+        "createdAt": "2025-11-04T10:00:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+**エラーレスポンス例:**
+
+プラン上限を超える場合:
+```json
+{
+  "success": false,
+  "message": "リクエストされたジョブ数 (10 件) を作成すると、プランの上限 (5 件) を超えてしまいます。現在のジョブ数: 3 件",
+  "data": null
+}
+```
+
+---
+
 ## API Keys API
 
 APIキーの管理を行うAPIです。
@@ -354,13 +463,15 @@ curl -X GET https://your-domain.com/api/keys \
 ```json
 {
   "name": "Production API Key",
-  "scopes": ["read:jobs", "write:jobs"]
+  "scopes": ["read:jobs", "write:jobs", "read:logs"]
 }
 ```
 
 **利用可能なスコープ:**
 - `read:jobs` - ジョブ情報の取得
 - `write:jobs` - ジョブの作成・更新・削除・実行
+- `read:logs` - 実行ログ情報の取得
+- `write:logs` - 実行ログの作成・削除
 - `read:keys` - APIキー情報の取得
 - `write:keys` - APIキーの作成・削除
 
@@ -371,7 +482,7 @@ curl -X POST https://your-domain.com/api/keys \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Production API Key",
-    "scopes": ["read:jobs", "write:jobs"]
+    "scopes": ["read:jobs", "write:jobs", "read:logs"]
   }'
 ```
 
@@ -385,7 +496,7 @@ curl -X POST https://your-domain.com/api/keys \
       "id": "key_xxxxx",
       "name": "Production API Key",
       "keyHash": "hash_xxxxx",
-      "scopes": ["read:jobs", "write:jobs"],
+      "scopes": ["read:jobs", "write:jobs", "read:logs"],
       "enabled": true,
       "expiresAt": "2026-11-04T00:00:00.000Z",
       "lastUsed": null,
@@ -435,7 +546,7 @@ curl -X DELETE https://your-domain.com/api/keys/key_xxxxx \
 ```json
 {
   "success": true,
-  "message": "APIキーを削除しました",
+  "message": "APIキーが削除されました",
   "data": null
 }
 ```
@@ -478,6 +589,17 @@ curl -X DELETE https://your-domain.com/api/keys/key_xxxxx \
 const API_TOKEN = process.env.RECORON_API_TOKEN;
 const BASE_URL = 'https://your-domain.com/api';
 
+// レスポンスハンドラー
+async function handleResponse(response) {
+  const data = await response.json();
+  
+  if (!data.success) {
+    throw new Error(data.message || 'リクエストに失敗しました');
+  }
+  
+  return data.data;
+}
+
 // ジョブ一覧を取得
 async function getJobs() {
   const response = await fetch(`${BASE_URL}/jobs`, {
@@ -485,8 +607,7 @@ async function getJobs() {
       'Authorization': `Bearer ${API_TOKEN}`
     }
   });
-  const data = await response.json();
-  return data.data;
+  return handleResponse(response);
 }
 
 // ジョブを作成
@@ -499,8 +620,20 @@ async function createJob(jobData) {
     },
     body: JSON.stringify(jobData)
   });
-  const data = await response.json();
-  return data.data;
+  return handleResponse(response);
+}
+
+// 複数のジョブを一括作成
+async function createJobsBatch(jobsData) {
+  const response = await fetch(`${BASE_URL}/jobs/batch`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${API_TOKEN}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(jobsData)
+  });
+  return handleResponse(response);
 }
 
 // ジョブを実行
@@ -511,8 +644,18 @@ async function executeJob(jobId) {
       'Authorization': `Bearer ${API_TOKEN}`
     }
   });
-  const data = await response.json();
-  return data.data;
+  return handleResponse(response);
+}
+
+// ジョブを削除
+async function deleteJob(jobId) {
+  const response = await fetch(`${BASE_URL}/jobs/${jobId}`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${API_TOKEN}`
+    }
+  });
+  return handleResponse(response);
 }
 ```
 
@@ -530,10 +673,19 @@ headers = {
     'Content-Type': 'application/json'
 }
 
+def handle_response(response):
+    """レスポンスハンドラー"""
+    data = response.json()
+    
+    if not data.get('success'):
+        raise Exception(data.get('message', 'リクエストに失敗しました'))
+    
+    return data.get('data')
+
 # ジョブ一覧を取得
 def get_jobs():
     response = requests.get(f'{BASE_URL}/jobs', headers=headers)
-    return response.json()['data']
+    return handle_response(response)
 
 # ジョブを作成
 def create_job(job_data):
@@ -542,7 +694,16 @@ def create_job(job_data):
         headers=headers,
         json=job_data
     )
-    return response.json()['data']
+    return handle_response(response)
+
+# 複数のジョブを一括作成
+def create_jobs_batch(jobs_data):
+    response = requests.post(
+        f'{BASE_URL}/jobs/batch',
+        headers=headers,
+        json=jobs_data
+    )
+    return handle_response(response)
 
 # ジョブを実行
 def execute_job(job_id):
@@ -550,7 +711,15 @@ def execute_job(job_id):
         f'{BASE_URL}/jobs/{job_id}/execute',
         headers=headers
     )
-    return response.json()['data']
+    return handle_response(response)
+
+# ジョブを削除
+def delete_job(job_id):
+    response = requests.delete(
+        f'{BASE_URL}/jobs/{job_id}',
+        headers=headers
+    )
+    return handle_response(response)
 ```
 
 ### cURL
@@ -571,9 +740,36 @@ curl -X POST https://your-domain.com/api/jobs \
     "schedule": "0 9 * * *"
   }'
 
+# 複数のジョブを一括作成
+curl -X POST https://your-domain.com/api/jobs/batch \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[
+    {
+      "name": "Job 1",
+      "url": "https://api.example.com/endpoint1",
+      "method": "GET",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "name": "Job 2",
+      "url": "https://api.example.com/endpoint2",
+      "method": "POST",
+      "schedule": "0 * * * *"
+    }
+  ]'
+
 # ジョブを実行
 curl -X POST https://your-domain.com/api/jobs/JOB_ID/execute \
   -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# ジョブを更新
+curl -X PATCH https://your-domain.com/api/jobs/JOB_ID \
+  -H "Authorization: Bearer YOUR_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "enabled": false
+  }'
 
 # ジョブを削除
 curl -X DELETE https://your-domain.com/api/jobs/JOB_ID \
@@ -592,6 +788,12 @@ curl -X DELETE https://your-domain.com/api/jobs/JOB_ID \
 ---
 
 ## 変更履歴
+
+### v1.1.0 (2025-11-04)
+- レスポンス形式を統一 (`success`, `message`, `data` フィールド)
+- バッチジョブ作成API (`POST /api/jobs/batch`) を追加
+- エラーハンドリングの改善
+- サンプルコードにエラーハンドリングを追加
 
 ### v1.0.0 (2025-11-04)
 - 初回リリース
