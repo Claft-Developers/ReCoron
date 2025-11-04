@@ -48,8 +48,7 @@ export default async function CronLogsPage(context: Context) {
                     },
                 },
             },
-            orderBy: { finishedAt: "desc" },
-            take: 100, // 最新100件まで
+            orderBy: { finishedAt: "desc" }
         }),
 
         prisma.job.findMany({
