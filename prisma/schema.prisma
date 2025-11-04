@@ -158,7 +158,8 @@ model APIKey {
   userId    String
 
   name      String
-  keyHash   String   @unique @map("key_hash") // トークンのハッシュ値（元のトークンは保存しない）
+  keyHash   String   @unique @map("key_hash") // トークンのハッシュ値
+
   lastUsed  DateTime? @map("last_used") // 最終使用日時
   expiresAt DateTime? @map("expires_at") // 有効期限
   

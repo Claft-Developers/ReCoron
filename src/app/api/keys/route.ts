@@ -1,4 +1,5 @@
 import { APIKeyPayload } from "@/types/key";
+import type { Scope } from "@prisma/client";
 import { NextRequest } from "next/server";
 import { withAuth } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
@@ -43,6 +44,12 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
 
         const body = await req.json();
         const { name, scopes } = body;
+
+        scopes?.forEach((scope: string) => {
+            if (!["read:jobs", "write:jobs", "read:logs", "write:logs"].includes(scope)) {
+                throw new Error(`無効なスコープが指定されました: ${scope}`);
+            }
+        });
 
         const expiresAt = new Date();
         expiresAt.setFullYear(expiresAt.getFullYear() + 1);
