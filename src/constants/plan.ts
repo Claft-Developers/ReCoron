@@ -35,6 +35,7 @@ const PRICING_TIERS = [
             maxExecutions: 100,
             maxScheduling: 60,
             maxApiCalls: 50,
+            maxLogsDays: 1,
         }
     },
     {
@@ -60,6 +61,7 @@ const PRICING_TIERS = [
             maxExecutions: Infinity,
             maxScheduling: 15,
             maxApiCalls: 500,
+            maxLogsDays: 7,
         }
     },
     {
@@ -84,6 +86,7 @@ const PRICING_TIERS = [
             maxExecutions: Infinity,
             maxScheduling: 1,
             maxApiCalls: 5000,
+            maxLogsDays: 30,
         }
     }
 ];
