@@ -12,8 +12,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         redirect("/login");
     }
 
-    // 管理者権限チェック
-    if (!isAdmin(session.user.email)) {
+    // 管理者権限チェック（データベースベース）
+    const adminStatus = await isAdmin(session.user.id);
+    if (!adminStatus) {
         redirect("/jobs");
     }
 
