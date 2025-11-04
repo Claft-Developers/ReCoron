@@ -2,7 +2,7 @@ import { Prisma, Job, Type, User, Method } from "@prisma/client";
 import { CronExpressionParser } from "cron-parser";
 import { PRICING_TIERS } from "@/constants/plan";
 import { prisma } from "@/lib/prisma";
-import { checkJobExecutionLimit } from "@/utils/limits";
+import { checkJobExecutionLimit, recordJobExecution } from "@/utils/usage-tracking";
 
 const TIMEOUT = 10 * 1000; // 10秒
 
@@ -26,13 +26,15 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         where: { id: job.userId },
         select: { plan: true }
     });
-    const willExecute = checkJobExecutionLimit(job, user!.plan);
-    if (!willExecute) {
+
+    // 新しい使用量追跡システムで制限をチェック
+    const executionCheck = await checkJobExecutionLimit(job.userId, user!.plan);
+    if (!executionCheck.allowed) {
         console.log(`Job ${job.id} has reached execution limit for plan ${user!.plan}. Skipping execution.`);
         return {
             jobId: job.id,
             skipped: true,
-            reason: "Execution limit reached for current plan"
+            reason: executionCheck.message || "Execution limit reached for current plan"
         };
     }
 
@@ -113,6 +115,11 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
                         data: updatePayload,
                     }),
                 ]);
+                
+                // 成功した場合、実行を記録
+                if (payload.successful) {
+                    await recordJobExecution(job.userId);
+                }
             } catch (e) {
                 console.error('Failed to persist job result', e);
             }

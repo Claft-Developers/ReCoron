@@ -9,6 +9,7 @@ import {
     unauthorizedResponse,
 } from "@/utils/response";
 import { getAuth } from "@/lib/auth";
+import { recordJobDeletion } from "@/utils/usage-tracking";
 
 interface Context {
     params: Promise<{ [key: string]: string }>;
@@ -63,6 +64,9 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
         await prisma.job.delete({
             where: { id: jobId, userId: auth.userId },
         });
+
+        // ジョブ削除を記録
+        await recordJobDeletion(auth.userId, jobId);
 
         return successResponse(null, "ジョブを削除しました");
     } catch (error) {

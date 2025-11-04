@@ -11,6 +11,7 @@ import {
     validationErrorResponse,
 } from "@/utils/response";
 import { signJWT, generateRandomKey, hashToken } from "@/utils/token";
+import { checkApiKeyCreationLimit, recordApiKeyCreation } from "@/utils/usage-tracking";
 
 
 export const GET = ((req: NextRequest) => withAuth(req, async (req, payload) => {
@@ -43,6 +44,21 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
             }
         }
 
+        // ユーザー情報を取得
+        const user = await prisma.user.findUnique({
+            where: { id: auth.userId },
+        });
+
+        if (!user) {
+            return unauthorizedResponse("ユーザーが見つかりません");
+        }
+
+        // 新しい使用量追跡システムでチェック
+        const limitCheck = await checkApiKeyCreationLimit(auth.userId, user.plan);
+        if (!limitCheck.allowed) {
+            return validationErrorResponse(limitCheck.message || "APIキー作成の上限に達しています");
+        }
+
         const body = await req.json();
         const { name, scopes } = body;
 
@@ -72,6 +88,10 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
                 expiresAt,
             },
         });
+
+        // APIキー作成を記録
+        await recordApiKeyCreation(auth.userId, newKey.id);
+
         return createdResponse({ apiKey: newKey, token });
     } catch (error) {
         console.error("Error in POST /api/keys:", error);

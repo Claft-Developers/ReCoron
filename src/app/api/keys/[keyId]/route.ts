@@ -9,6 +9,7 @@ import {
     unauthorizedResponse,
 } from "@/utils/response";
 import { getAuth } from "@/lib/auth";
+import { recordApiKeyDeletion } from "@/utils/usage-tracking";
 
 interface Context {
     params: Promise<{ [jobId: string]: string }>;
@@ -50,6 +51,10 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
         await prisma.aPIKey.deleteMany({
             where: { id: keyId, user: { id: auth.userId } },
         });
+
+        // APIキー削除を記録
+        await recordApiKeyDeletion(auth.userId, keyId);
+
         return successResponse(null, "APIキーが削除されました");
     } catch (error) {
         console.error("Failed to delete API key:", error);

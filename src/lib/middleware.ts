@@ -6,7 +6,7 @@ import { verifyJWT, hashToken } from "@/utils/token";
 import { prisma } from "./prisma";
 import { auth } from "./auth";
 import { unauthorizedResponse } from "@/utils/response";
-import { checkApiCallLimit } from "@/utils/limits";
+import { checkApiCallLimit, recordApiCall } from "@/utils/usage-tracking";
 
 // ハンドラー関数のオーバーロード定義
 interface Context {
@@ -72,11 +72,21 @@ export async function withAuth(req: NextRequest, handler: AuthHandler, context?:
         if (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date()) {
             return unauthorizedResponse("このAPIキーは期限切れです");
         }
+
+        // ユーザー情報を取得
+        const user = await prisma.user.findUnique({
+            where: { id: apiKey.userId },
+            select: { plan: true }
+        });
+
+        if (!user) {
+            return unauthorizedResponse("ユーザーが見つかりません");
+        }
         
-        // APIコール制限のチェック
-        const isAllowed = await checkApiCallLimit(apiKey.userId);
-        if (!isAllowed) {
-            return unauthorizedResponse("APIコール制限を超えました");
+        // 新しい使用量追跡システムでAPIコール制限をチェック
+        const apiCallCheck = await checkApiCallLimit(apiKey.userId, user.plan);
+        if (!apiCallCheck.allowed) {
+            return unauthorizedResponse(apiCallCheck.message || "APIコール制限を超えました");
         }
 
         // ログ作成と最終使用日時更新を非同期で実行（レスポンスをブロックしない）
@@ -112,6 +122,12 @@ export async function withAuth(req: NextRequest, handler: AuthHandler, context?:
             console.error("Failed to update lastUsed:", err);
         });
         updatePromises.push(updatePromise);
+
+        // API呼び出しを記録（バックグラウンドで実行）
+        const recordPromise = recordApiCall(apiKey.userId).catch(err => {
+            console.error("Failed to record API call:", err);
+        });
+        updatePromises.push(recordPromise);
 
         // Promise を作成（実行開始）
         const backgroundTasks = Promise.all(updatePromises);

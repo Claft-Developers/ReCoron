@@ -1,6 +1,5 @@
 import { APIKeyPayload } from "@/types/key";
 import { NextRequest } from "next/server";
-import { PRICING_TIERS } from "@/constants/plan";
 import { withAuth } from "@/lib/middleware";
 import { prisma } from "@/lib/prisma";
 import {
@@ -12,6 +11,7 @@ import {
 } from "@/utils/response";
 import { getAuth } from "@/lib/auth";
 import { createCronJob } from "@/lib/job";
+import { checkJobCreationLimit, recordJobCreation } from "@/utils/usage-tracking";
 
 
 
@@ -24,7 +24,6 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
         const [user, body] = await Promise.all([
             prisma.user.findUnique({
                 where: { id: userId },
-                include: { jobs: true }
             }),
             req.json()
         ]);
@@ -39,13 +38,16 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
             }
         }
 
-        const planInfo = PRICING_TIERS.find(plan => plan.id.toUpperCase() === user.plan)!;
-
-        if (user.jobs.length >= planInfo.limit.maxJobs) {
-            return validationErrorResponse(`現在のプラン (${user.plan}) では、最大ジョブ数 (${planInfo.limit.maxJobs} 件) に達しています`);
+        // 新しい使用量追跡システムでチェック
+        const limitCheck = await checkJobCreationLimit(userId, user.plan);
+        if (!limitCheck.allowed) {
+            return validationErrorResponse(limitCheck.message || "ジョブ作成の上限に達しています");
         }
 
         const result = await createCronJob(body, user);
+
+        // ジョブ作成を記録
+        await recordJobCreation(userId, result.id);
 
         return createdResponse(result);
     } catch (error) {
