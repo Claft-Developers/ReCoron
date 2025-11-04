@@ -3,8 +3,11 @@ import { APIKey } from "@prisma/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Trash2, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { Copy, Trash2, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight, Edit, X } from "lucide-react";
 import { formatDate } from "@/utils/date";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 
 interface Props {
@@ -17,6 +20,9 @@ export function APIKeysTable({ apiKeys }: Props) {
     const router = useRouter();
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [editingKey, setEditingKey] = useState<APIKey | null>(null);
+    const [editName, setEditName] = useState("");
+    const [isUpdating, setIsUpdating] = useState(false);
 
     const totalPages = Math.ceil(apiKeys.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -37,6 +43,62 @@ export function APIKeysTable({ apiKeys }: Props) {
     const goToPage = ((page: number) => {
         setCurrentPage(page);
     });
+
+    const openEditModal = (key: APIKey) => {
+        setEditingKey(key);
+        setEditName(key.name);
+    };
+
+    const closeEditModal = () => {
+        setEditingKey(null);
+        setEditName("");
+        setIsUpdating(false);
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!editingKey || !editName.trim()) {
+            toast.error("APIキー名を入力してください");
+            return;
+        }
+
+        if (editName === editingKey.name) {
+            toast.info("変更がありません");
+            closeEditModal();
+            return;
+        }
+
+        setIsUpdating(true);
+
+        try {
+            const response = await fetch(`/api/keys/${editingKey.id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    name: editName.trim(),
+                    scopes: editingKey.scopes,
+                }),
+            });
+
+            const data = await response.json();
+            
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "APIキーの更新に失敗しました");
+            }
+
+            toast.success("APIキーを更新しました");
+            closeEditModal();
+            router.refresh();
+        } catch (error: any) {
+            console.error("Failed to update API key:", error);
+            toast.error(error.message || "APIキーの更新に失敗しました");
+        } finally {
+            setIsUpdating(false);
+        }
+    };
 
     const handleDelete = (async (keyId: string) => {
         if (!confirm("本当にこのAPIキーを削除しますか？この操作は取り消せません。")) {
@@ -65,6 +127,7 @@ export function APIKeysTable({ apiKeys }: Props) {
     });
 
     return (
+        <>
         <div className="bg-white/[0.02] border border-white/10 rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full">
@@ -155,6 +218,13 @@ export function APIKeysTable({ apiKeys }: Props) {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <button
+                                                onClick={() => openEditModal(key)}
+                                                className="p-2 rounded hover:bg-white/5 transition-colors"
+                                                title="編集"
+                                            >
+                                                <Edit className="w-4 h-4 text-blue-400" />
+                                            </button>
+                                            <button
                                                 onClick={() => copyToClipboard(key.id, key.id)}
                                                 className="p-2 rounded hover:bg-white/5 transition-colors"
                                                 title="IDをコピー" >
@@ -244,5 +314,97 @@ export function APIKeysTable({ apiKeys }: Props) {
                 </div>
             )}
         </div>
+
+        {/* 編集モーダル */}
+        {editingKey && (
+            <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+                <div className="bg-black border border-white/20 rounded-xl max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                    {/* Header */}
+                    <div className="border-b border-white/10 px-6 py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center">
+                                <Edit className="w-5 h-5 text-blue-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-lg font-bold text-white">APIキー名を編集</h2>
+                                <p className="text-xs text-gray-400">ID: {editingKey.id.slice(0, 12)}...</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={closeEditModal}
+                            className="p-2 rounded-lg hover:bg-white/5 transition-colors"
+                            disabled={isUpdating}
+                        >
+                            <X className="w-5 h-5 text-gray-400" />
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <form onSubmit={handleUpdate} className="p-6 space-y-4">
+                        <div>
+                            <Label htmlFor="edit-name" className="text-sm font-medium mb-2 block text-gray-300">
+                                APIキー名 <span className="text-red-400">*</span>
+                            </Label>
+                            <Input
+                                id="edit-name"
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                placeholder="例: Production API Key"
+                                className="bg-black/50 border-white/10"
+                                required
+                                disabled={isUpdating}
+                                autoFocus
+                            />
+                            <p className="text-xs text-gray-400 mt-2">
+                                ℹ️ セキュリティ上の理由により、スコープの変更はできません
+                            </p>
+                        </div>
+
+                        {/* 現在のスコープ表示 */}
+                        <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
+                            <p className="text-xs text-gray-400 mb-2">現在のスコープ:</p>
+                            <div className="flex flex-wrap gap-2">
+                                {editingKey.scopes.map((scope) => (
+                                    <span
+                                        key={scope}
+                                        className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20"
+                                    >
+                                        {scope}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Buttons */}
+                        <div className="flex gap-3 pt-2">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={closeEditModal}
+                                className="flex-1"
+                                disabled={isUpdating}
+                            >
+                                キャンセル
+                            </Button>
+                            <Button
+                                type="submit"
+                                className="flex-1 bg-white text-black hover:bg-gray-200"
+                                disabled={isUpdating || !editName.trim() || editName === editingKey.name}
+                            >
+                                {isUpdating ? (
+                                    <>
+                                        <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                                        更新中...
+                                    </>
+                                ) : (
+                                    "更新"
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        )}
+    </>
     );
 }
