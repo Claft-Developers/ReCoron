@@ -58,13 +58,13 @@ export function CreateAPIKeyForm() {
                 }),
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "APIキーの作成に失敗しました");
+            const data = await response.json();
+            
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "APIキーの作成に失敗しました");
             }
 
-            const data = await response.json();
-            setGeneratedToken(data.token);
+            setGeneratedToken(data.data.token);
             toast.success("APIキーを作成しました");
         } catch (error: any) {
             console.error("Failed to create API key:", error);

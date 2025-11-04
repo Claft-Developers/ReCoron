@@ -29,9 +29,9 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 body: JSON.stringify({ enabled: !job.enabled }),
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "ジョブの更新に失敗しました");
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "ジョブの更新に失敗しました");
             }
 
             toast.success(job.enabled ? "ジョブを停止しました" : "ジョブを有効化しました", { id: toastId, description: undefined });
@@ -58,9 +58,9 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 method: "DELETE",
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "ジョブの削除に失敗しました");
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "ジョブの削除に失敗しました");
             }
 
             toast.success("ジョブを削除しました", { id: toastId, description: undefined });
@@ -82,9 +82,9 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 method: "POST",
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.error || "ジョブの実行に失敗しました");
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "ジョブの実行に失敗しました");
             }
 
             toast.success("ジョブを実行しました", { id: toastId, description: undefined });

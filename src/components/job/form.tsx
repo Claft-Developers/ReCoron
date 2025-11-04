@@ -56,9 +56,9 @@ export function CreateJobForm() {
             });
             const data = await response.json();
 
-            if (!response.ok) {
+            if (!response.ok || !data.success) {
                 console.error("Error data:", data);
-                throw new Error(data.error);
+                throw new Error(data.message || "ジョブの作成に失敗しました");
             }
 
             toast.success("ジョブを作成しました", { id: toastId, description: undefined });

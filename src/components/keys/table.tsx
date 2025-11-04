@@ -50,9 +50,10 @@ export function APIKeysTable({ apiKeys }: Props) {
                 method: "DELETE",
             });
 
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.message || "APIキーの削除に失敗しました");
+            const data = await response.json();
+            
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || "APIキーの削除に失敗しました");
             }
 
             toast.success("APIキーを削除しました", { id: toastId });
