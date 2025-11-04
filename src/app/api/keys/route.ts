@@ -45,7 +45,7 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
         const { name, scopes } = body;
 
         scopes?.forEach((scope: string) => {
-            if (!["read:jobs", "write:jobs", "read:logs", "write:logs"].includes(scope)) {
+            if (!["read:jobs", "write:jobs", "read:logs", "write:logs", "read:keys", "write:keys"].includes(scope)) {
                 throw new Error(`無効なスコープが指定されました: ${scope}`);
             }
         });
