@@ -47,7 +47,7 @@ const PRICING_TIERS = [
         popular: true,
         features: {
             jobs: { included: true, value: "15個" },
-            executions: { included: true, value: "無制限" },
+            executions: { included: true, value: "5,000回/月" },
             scheduling: { included: true, value: "15分毎" },
             dynamicJobs: { included: true, value: "完全対応" },
             apiCalls: { included: true, value: "150回/日" },
@@ -58,7 +58,7 @@ const PRICING_TIERS = [
         },
         limit: {
             maxJobs: 15,
-            maxExecutions: Infinity,
+            maxExecutions: 5000,
             maxScheduling: 15,
             maxApiCalls: 500,
             maxLogsDays: 7,
