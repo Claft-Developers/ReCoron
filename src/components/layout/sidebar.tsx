@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   Home, 
   Clock, 
@@ -18,7 +18,7 @@ import { signOut, useSession } from "@/lib/auth-client";
 const navigation = [
   { name: "Home", href: "/jobs", icon: Home },
   { name: "Jobs", href: "/jobs", icon: Clock },
-  { name: "API Keys", href: "/api-keys", icon: KeyRound },
+  { name: "API Keys", href: "/keys", icon: KeyRound },
   { name: "Logs", href: "/logs", icon: Logs },
   { name: "Webhooks", href: "/webhooks", icon: ArrowUpDown },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -30,11 +30,13 @@ const bottomNavigation = [
 ];
 
 export function Sidebar() {
+  const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
 
   const handleSignOut = async () => {
     await signOut();
+    router.push("/login");
   };
 
   const userEmail = session?.user?.email || "user@example.com";
