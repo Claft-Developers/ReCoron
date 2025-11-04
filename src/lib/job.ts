@@ -6,9 +6,9 @@ const TIMEOUT = 10 * 1000; // 10秒
 
 export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
     const now = new Date();
-    const interval = CronExpressionParser.parse(job.schedule, { 
-        tz: job.timezone || "Asia/Tokyo", 
-        currentDate: job.nextRunAt || now 
+    const interval = CronExpressionParser.parse(job.schedule, {
+        tz: job.timezone || "Asia/Tokyo",
+        currentDate: job.nextRunAt || now
     });
     const nextRun = interval.next().toDate();
 
@@ -20,7 +20,7 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         });
     }
 
-    
+
     const url = job.url;
     const headers = (job.headers || {}) as Record<string, string>;
     const body = job.body || undefined;
@@ -74,16 +74,24 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         payload.finishedAt = lastRunAt;
         payload.durationMs = payload.finishedAt.getTime() - now.getTime();
 
-        await prisma.runningLog.create({ data: payload });
+        void (async () => { // 非同期で実行
+            try {
+                await Promise.all([
+                    prisma.runningLog.create({ data: payload }),
+                    prisma.job.update({
+                        where: { id: job.id },
+                        data: {
+                            lastRunAt,
+                            count: { increment: 1 },
+                            failureCount: payload.successful ? { increment: 0 } : { increment: 1 },
+                        },
+                    }),
+                ]);
+            } catch (e) {
+                console.error('Failed to persist job result', e);
+            }
+        })();
 
-        await prisma.job.update({
-            where: { id: job.id },
-            data: { 
-                lastRunAt: lastRunAt,
-                count: { increment: 1 },
-                failureCount: payload.successful ? { increment: 0 } : { increment: 1 },
-            },
-        });
 
         return payload;
     }
