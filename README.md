@@ -7,8 +7,9 @@
 - 🚀 **簡単なセットアップ** - 数分でスケジュールタスクを開始
 - ⏰ **柔軟なスケジューリング** - Cron式で自由にスケジュール設定
 - 📊 **詳細なログ** - 実行履歴と結果を保存・確認可能
-- � **APIキー認証** - セキュアなプログラマティックアクセス
+- 🔑 **APIキー認証** - セキュアなプログラマティックアクセス
 - 🔐 **セキュアな認証** - GitHub/Google OAuth + メール/パスワード
+- 📈 **使用量追跡** - 削除されたリソースも含む完全な使用履歴
 - 🌐 **RESTful API** - 完全なAPI仕様でプログラマブル
 
 ## � ドキュメント
@@ -18,6 +19,7 @@
   - [認証](https://your-domain.com/docs/api/authentication) - 認証方法とセキュリティ
   - [Jobs API](https://your-domain.com/docs/api/jobs) - ジョブ管理API
   - [Keys API](https://your-domain.com/docs/api/keys) - APIキー管理API
+  - [Usage API](https://your-domain.com/docs/api/usage) - 使用量追跡と統計情報
   - [サンプルコード](https://your-domain.com/docs/api/examples) - Node.js、Python、cURL、TypeScriptの実装例
 
 ## 🛠️ 技術スタック
@@ -255,7 +257,7 @@ ReCoronはBetter Authを使用した認証システムを実装しています�
 - `GET /api/auth/sign-in/social` - ソーシャルログイン
 - `POST /api/auth/sign-out` - ログアウト
 
-### ジョブ管理 (Jobs API)
+### Jobs API
 - `GET /api/jobs` - ジョブ一覧取得
 - `POST /api/jobs` - ジョブ作成
 - `POST /api/jobs/batch` - ジョブ一括作成
@@ -264,11 +266,14 @@ ReCoronはBetter Authを使用した認証システムを実装しています�
 - `DELETE /api/jobs/:id` - ジョブ削除
 - `POST /api/jobs/:id/execute` - ジョブ手動実行
 
-### APIキー管理 (Keys API)
+### Keys API
 - `GET /api/keys` - APIキー一覧取得
 - `POST /api/keys` - APIキー作成
 - `GET /api/keys/:id` - APIキー詳細取得
 - `DELETE /api/keys/:id` - APIキー削除
+
+### Usage API
+- `GET /api/usage` - 使用量統計取得
 
 ### 管理
 - `POST /api/admin/cron` - Cron実行エンドポイント（内部用）

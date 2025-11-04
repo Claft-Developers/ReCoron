@@ -95,6 +95,16 @@ async function deleteJob(jobId) {
   });
   return handleResponse(response);
 }
+
+// 使用量を取得
+async function getUsage() {
+  const response = await fetch(`${BASE_URL}/usage`, {
+    headers: {
+      'Authorization': `Bearer ${API_TOKEN}`
+    }
+  });
+  return handleResponse(response);
+}
 ```
 
 ### 使用例
@@ -137,6 +147,12 @@ async function main() {
       }
     ]);
     console.log('Created batch jobs:', batchJobs.count);
+
+    // 使用量を確認
+    const usage = await getUsage();
+    console.log('Monthly executions:', usage.monthly.executions);
+    console.log('Daily API calls:', usage.daily.apiCalls);
+    console.log('Current jobs:', usage.current.jobs);
 
   } catch (error) {
     console.error('Error:', error.message);
@@ -225,6 +241,15 @@ def delete_job(job_id: str) -> None:
         headers=headers
     )
     return handle_response(response)
+
+# 使用量を取得
+def get_usage() -> Dict:
+    response = requests.get(f'{BASE_URL}/usage', headers=headers)
+    return handle_response(response)
+```
+        headers=headers
+    )
+    return handle_response(response)
 ```
 
 ### 使用例
@@ -266,6 +291,12 @@ def main():
             }
         ])
         print(f"Created batch jobs: {batch_result['count']}")
+
+        # 使用量を確認
+        usage = get_usage()
+        print(f"Monthly executions: {usage['monthly']['executions']}")
+        print(f"Daily API calls: {usage['daily']['apiCalls']}")
+        print(f"Current jobs: {usage['current']['jobs']}")
 
     except Exception as e:
         print(f"Error: {e}")
@@ -362,6 +393,47 @@ curl -X DELETE https://your-domain.com/api/keys/KEY_ID \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
+### 使用量の確認
+
+```bash
+# 使用量統計を取得
+curl -X GET https://your-domain.com/api/usage \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+
+# レスポンス例
+# {
+#   "success": true,
+#   "message": "success",
+#   "data": {
+#     "current": {
+#       "jobs": 5,
+#       "apiKeys": 2
+#     },
+#     "monthly": {
+#       "year": 2025,
+#       "month": 11,
+#       "executions": 234,
+#       "apiCalls": 1567,
+#       "billedAmount": 0,
+#       "paid": false
+#     },
+#     "daily": {
+#       "date": "2025-11-04T00:00:00.000Z",
+#       "executions": 12,
+#       "apiCalls": 45,
+#       "peakJobCount": 5,
+#       "peakApiKeyCount": 2
+#     },
+#     "todayActivity": {
+#       "jobsCreated": 2,
+#       "jobsDeleted": 1,
+#       "apiKeysCreated": 0,
+#       "apiKeysDeleted": 0
+#     }
+#   }
+# }
+```
+
 ---
 
 ## TypeScript (型定義付き)
@@ -399,6 +471,34 @@ interface ApiResponse<T> {
   success: boolean;
   message: string;
   data: T;
+}
+
+interface Usage {
+  current: {
+    jobs: number;
+    apiKeys: number;
+  };
+  monthly: {
+    year: number;
+    month: number;
+    executions: number;
+    apiCalls: number;
+    billedAmount: number;
+    paid: boolean;
+  };
+  daily: {
+    date: string;
+    executions: number;
+    apiCalls: number;
+    peakJobCount: number;
+    peakApiKeyCount: number;
+  };
+  todayActivity: {
+    jobsCreated: number;
+    jobsDeleted: number;
+    apiKeysCreated: number;
+    apiKeysDeleted: number;
+  };
 }
 
 // client.ts
@@ -462,8 +562,11 @@ class ReCoronClient {
       method: 'DELETE',
     });
   }
-}
 
+  async getUsage(): Promise<Usage> {
+    return this.request<Usage>('/usage');
+  }
+}
 // 使用例
 const client = new ReCoronClient(
   'https://your-domain.com/api',
@@ -481,6 +584,12 @@ async function main() {
     schedule: '0 9 * * *',
   });
   console.log('Created:', newJob);
+
+  // 使用量を確認
+  const usage = await client.getUsage();
+  console.log('Monthly executions:', usage.monthly.executions);
+  console.log('Daily API calls:', usage.daily.apiCalls);
+  console.log('Current jobs:', usage.current.jobs);
 }
 ```
 

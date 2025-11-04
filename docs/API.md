@@ -10,6 +10,7 @@ ReCoron APIは、Cron Jobの管理とAPIキーの管理を提供するRESTful AP
 - **[認証 (authentication.md)](./authentication.md)** - 認証方法、スコープシステム、セキュリティのベストプラクティス
 - **[Jobs API (jobs-api.md)](./jobs-api.md)** - ジョブ管理のための全エンドポイント
 - **[Keys API (keys-api.md)](./keys-api.md)** - APIキー管理のための全エンドポイント
+- **[Usage API (usage-api.md)](./usage-api.md)** - 使用量追跡と統計情報
 - **[サンプルコード (examples.md)](./examples.md)** - Node.js、Python、cURL、TypeScript のサンプルコード
 
 ## クイックスタート
@@ -53,6 +54,15 @@ curl -X POST https://your-domain.com/api/jobs/JOB_ID/execute \
   -H "Authorization: Bearer YOUR_API_TOKEN"
 ```
 
+### 4. 使用量の確認
+
+現在の使用量を確認します：
+
+```bash
+curl -X GET https://your-domain.com/api/usage \
+  -H "Authorization: Bearer YOUR_API_TOKEN"
+```
+
 ## 主な機能
 
 - ✅ **Cron Jobの管理** - 定期的なHTTPリクエストをスケジュール
@@ -60,6 +70,7 @@ curl -X POST https://your-domain.com/api/jobs/JOB_ID/execute \
 - ✅ **バッチ作成** - 複数のジョブを一度に作成
 - ✅ **実行ログ** - すべてのジョブ実行の詳細な履歴
 - ✅ **スコープシステム** - 細かい権限管理
+- ✅ **使用量追跡** - 削除されたリソースも含む完全な使用履歴
 - ✅ **複数プラン** - 用途に応じたプランを選択可能
 
 ## API仕様
