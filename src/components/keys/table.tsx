@@ -1,6 +1,6 @@
 "use client";
 import { APIKey } from "@prisma/client";
-import { Copy, Eye, EyeOff, Trash2, MoreVertical, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { Copy, Eye, EyeOff, Trash2, MoreVertical, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDate } from "@/utils/date";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,8 +9,16 @@ interface Props {
     apiKeys: APIKey[];
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export function APIKeysTable({ apiKeys }: Props) {
     const [copiedId, setCopiedId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const totalPages = Math.ceil(apiKeys.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentKeys = apiKeys.slice(startIndex, endIndex);
 
     const copyToClipboard = (text: string, id: string) => {
         navigator.clipboard.writeText(text);
@@ -21,6 +29,10 @@ export function APIKeysTable({ apiKeys }: Props) {
     const isExpired = (expiresAt: Date | null) => {
         if (!expiresAt) return false;
         return new Date(expiresAt) < new Date();
+    };
+
+    const goToPage = (page: number) => {
+        setCurrentPage(page);
     };
 
     return (
@@ -39,7 +51,7 @@ export function APIKeysTable({ apiKeys }: Props) {
                         </tr>
                     </thead>
                     <tbody>
-                        {apiKeys.map((key) => {
+                        {currentKeys.map((key) => {
                             const expired = isExpired(key.expiresAt);
                             return (
                                 <tr
@@ -137,6 +149,70 @@ export function APIKeysTable({ apiKeys }: Props) {
                     </tbody>
                 </table>
             </div>
+
+            {/* ページネーション */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
+                    <div className="text-sm text-gray-400">
+                        全 {apiKeys.length} 件中 {startIndex + 1} - {Math.min(endIndex, apiKeys.length)} 件を表示
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => goToPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                // 最初の2ページ、最後の2ページ、現在のページ周辺2ページを表示
+                                const showPage = 
+                                    page <= 2 || 
+                                    page > totalPages - 2 || 
+                                    (page >= currentPage - 1 && page <= currentPage + 1);
+                                
+                                const showEllipsis = 
+                                    (page === 3 && currentPage > 4) || 
+                                    (page === totalPages - 2 && currentPage < totalPages - 3);
+
+                                if (showEllipsis) {
+                                    return (
+                                        <span key={page} className="px-2 text-gray-500">
+                                            ...
+                                        </span>
+                                    );
+                                }
+
+                                if (!showPage) return null;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => goToPage(page)}
+                                        className={`min-w-[2rem] h-8 px-3 rounded text-sm transition-colors ${
+                                            currentPage === page
+                                                ? "bg-blue-500 text-white"
+                                                : "hover:bg-white/5 text-gray-300"
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => goToPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
