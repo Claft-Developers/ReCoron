@@ -156,7 +156,7 @@ curl -X GET https://your-domain.com/api/keys/key_xxxxx \
 
 ## APIキーの更新
 
-既存のAPIキーの名前と権限を更新します。
+既存のAPIキーの名前を更新します。
 
 **Endpoint:** `PUT /api/keys/{keyId}`
 
@@ -175,7 +175,9 @@ curl -X GET https://your-domain.com/api/keys/key_xxxxx \
 | フィールド | 型 | 必須 | 説明 |
 |-----------|------|------|------|
 | name | string | ✓ | 新しいAPIキー名 |
-| scopes | string[] | ✓ | 新しいスコープのリスト |
+| scopes | string[] | ✓ | 既存のスコープ（変更不可） |
+
+⚠️ **重要:** セキュリティ上の理由により、`scopes` は変更できません。リクエストには既存のスコープをそのまま含める必要があります。スコープを変更したい場合は、新しいAPIキーを作成して古いキーを削除してください。
 
 **リクエスト例:**
 ```bash
