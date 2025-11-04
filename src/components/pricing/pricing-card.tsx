@@ -60,7 +60,7 @@ export function PricingCard({
                 })}
             </ul>
 
-            <Link href={`/login`}>
+            <Link href={`/settings/billing`}>
                 <Button
                     className={`w-full cursor-pointer font-semibold transition-all ${popular
                             ? "bg-black text-white hover:bg-white hover:text-black hover:shadow-lg hover:scale-[1.02] border border-white/20"
