@@ -80,7 +80,6 @@ model RunningLog {
   successful Boolean @default(true)
 
   job Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  jobRaw Json? @map("job_raw")
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([jobId])
