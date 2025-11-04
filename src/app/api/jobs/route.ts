@@ -17,7 +17,7 @@ import { getAuth } from "@/lib/auth";
 
 
 
-export const POST = ((req: NextRequest) => withAuth(req, async (req, type, payload) => {
+export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) => {
     try {
         // ユーザーIDを取得
         const auth = getAuth(payload);
@@ -118,7 +118,7 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, type, paylo
     }
 }));
 
-export const GET = ((req: NextRequest) => withAuth(req, async (_, type, payload) => {
+export const GET = ((req: NextRequest) => withAuth(req, async (_, payload) => {
     try {
         // ユーザーIDを取得
         const auth = getAuth(payload);

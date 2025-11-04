@@ -14,7 +14,7 @@ interface Context {
     params: Promise<{ [key: string]: string }>;
 }
 
-export const GET = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
+export const GET = ((req: NextRequest, context: Context) => withAuth(req, async (req, payload, context) => {
     try {
         const { jobId } = await context!.params;
         const auth = getAuth(payload);
@@ -40,7 +40,7 @@ export const GET = ((req: NextRequest, context: Context) => withAuth(req, async 
     }
 }, context));
 
-export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
+export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, async (req, payload, context) => {
     try {
         const { jobId } = await context!.params;
         const auth = getAuth(payload);
@@ -71,7 +71,7 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
     }
 }, context));
 
-export const PATCH = ((req: NextRequest, context: Context) => withAuth(req, async (req, type, payload, context) => {
+export const PATCH = ((req: NextRequest, context: Context) => withAuth(req, async (req, payload, context) => {
     try {
         const { jobId } = await context!.params;
         const auth = getAuth(payload);
