@@ -1,6 +1,13 @@
 import Link from 'next/link';
 import './markdown.css';
 
+export function generateMetadata() {
+  return {
+    title: 'API Documentation - ReCoron',
+    description: 'ReCoron APIの完全なリファレンスドキュメントです。各セクションから詳細をご覧ください。',
+  }
+}
+
 export default async function APIDocPage() {
   // 分割されたドキュメント
   const sections = [

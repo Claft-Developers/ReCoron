@@ -5,6 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import '../markdown.css';
 
+export function generateMetadata() {
+  return {
+    title: 'Keys API - ReCoron',
+    description: 'ReCoron Keys APIの使用方法とエンドポイントについて説明します。',
+  }
+}
+
 export default async function KeysAPIPage() {
   const filePath = path.join(process.cwd(), 'docs', 'keys-api.md');
   const markdown = fs.readFileSync(filePath, 'utf-8');

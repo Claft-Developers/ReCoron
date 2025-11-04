@@ -1,5 +1,12 @@
 import Link from 'next/link';
 
+export function generateMetadata() {
+  return {
+    title: 'Docs - ReCoron',
+    description: 'ReCoronの使い方とAPI仕様について説明します',
+  }
+}
+
 export default async function DocsPage() {
   return (
     <div className="min-h-screen bg-black text-white mt-8">

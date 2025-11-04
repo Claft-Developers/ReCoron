@@ -5,6 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import '../markdown.css';
 
+export function generateMetadata() {
+  return {
+    title: 'Jobs API - ReCoron',
+    description: 'ReCoron Jobs APIの使用方法とエンドポイントについて説明します。',
+  }
+}
+
 export default async function JobsAPIPage() {
   const filePath = path.join(process.cwd(), 'docs', 'jobs-api.md');
   const markdown = fs.readFileSync(filePath, 'utf-8');

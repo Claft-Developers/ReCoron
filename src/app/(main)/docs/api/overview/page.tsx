@@ -5,6 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import '../markdown.css';
 
+export function generateMetadata() {
+  return {
+    title: 'API Overview - ReCoron',
+    description: 'ReCoron APIの概要と基本的な使用方法について説明します。',
+  }
+}
+
 export default async function OverviewPage() {
   const filePath = path.join(process.cwd(), 'docs', 'overview.md');
   const markdown = fs.readFileSync(filePath, 'utf-8');

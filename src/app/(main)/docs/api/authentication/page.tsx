@@ -5,6 +5,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import '../markdown.css';
 
+export function generateMetadata() {
+  return {
+    title: 'Authentication - ReCoron',
+    description: 'ReCoron APIの認証方法とトークン取得について説明します。',
+  }
+}
+
 export default async function AuthenticationPage() {
   const filePath = path.join(process.cwd(), 'docs', 'authentication.md');
   const markdown = fs.readFileSync(filePath, 'utf-8');
