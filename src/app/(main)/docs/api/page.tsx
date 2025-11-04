@@ -36,6 +36,18 @@ export default async function APIDocPage() {
       description: 'APIキー管理のための全エンドポイント (作成、取得、削除)' 
     },
     { 
+      name: 'Usage API', 
+      path: '/docs/api/usage', 
+      emoji: '📊', 
+      description: '使用量追跡と統計情報 (月次・日次使用量、リソース履歴)' 
+    },
+    { 
+      name: 'Plan API', 
+      path: '/docs/api/plan', 
+      emoji: '🎯', 
+      description: 'プラン管理と変更、ダウングレード時の自動無効化' 
+    },
+    { 
       name: 'サンプルコード', 
       path: '/docs/api/examples', 
       emoji: '💻', 

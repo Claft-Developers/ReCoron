@@ -11,6 +11,7 @@ ReCoron APIは、Cron Jobの管理とAPIキーの管理を提供するRESTful AP
 - **[Jobs API (jobs-api.md)](./jobs-api.md)** - ジョブ管理のための全エンドポイント
 - **[Keys API (keys-api.md)](./keys-api.md)** - APIキー管理のための全エンドポイント
 - **[Usage API (usage-api.md)](./usage-api.md)** - 使用量追跡と統計情報
+- **[Plan API (plan-api.md)](./plan-api.md)** - プラン管理と変更、ダウングレード時の自動無効化
 - **[サンプルコード (examples.md)](./examples.md)** - Node.js、Python、cURL、TypeScript のサンプルコード
 
 ## クイックスタート
@@ -71,6 +72,7 @@ curl -X GET https://your-domain.com/api/usage \
 - ✅ **実行ログ** - すべてのジョブ実行の詳細な履歴
 - ✅ **スコープシステム** - 細かい権限管理
 - ✅ **使用量追跡** - 削除されたリソースも含む完全な使用履歴
+- ✅ **プラン管理** - ダウングレード時の自動リソース無効化
 - ✅ **複数プラン** - 用途に応じたプランを選択可能
 
 ## API仕様

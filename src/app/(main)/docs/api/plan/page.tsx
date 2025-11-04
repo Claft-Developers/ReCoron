@@ -7,13 +7,13 @@ import '../markdown.css';
 
 export function generateMetadata() {
   return {
-    title: 'Examples - ReCoron',
-    description: 'ReCoron APIのサンプルコードと使用例を紹介します。',
+    title: 'Plan API - ReCoron',
+    description: 'ReCoron APIのプラン管理と変更、ダウングレード時の自動無効化について説明します。',
   }
 }
 
-export default async function ExamplesPage() {
-  const filePath = path.join(process.cwd(), 'docs', 'examples.md');
+export default async function PlanAPIPage() {
+  const filePath = path.join(process.cwd(), 'docs', 'plan-api.md');
   const markdown = fs.readFileSync(filePath, 'utf-8');
 
   return (
@@ -37,16 +37,16 @@ export default async function ExamplesPage() {
         {/* ナビゲーション */}
         <div className="mt-12 pt-8 border-t border-white/10 flex justify-between">
           <Link
-            href="/docs/api/plan"
+            href="/docs/api/usage"
             className="px-6 py-3 rounded-lg border border-white/20 hover:border-white/30 hover:bg-white/5 transition-all"
           >
-            ← Plan API
+            ← Usage API
           </Link>
           <Link
-            href="/docs/api"
+            href="/docs/api/examples"
             className="px-6 py-3 rounded-lg border border-white/20 hover:border-white/30 hover:bg-white/5 transition-all"
           >
-            API Documentation →
+            サンプルコード →
           </Link>
         </div>
       </div>

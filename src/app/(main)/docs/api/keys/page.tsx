@@ -43,10 +43,10 @@ export default async function KeysAPIPage() {
             ← Jobs API
           </Link>
           <Link
-            href="/docs/api/examples"
+            href="/docs/api/usage"
             className="px-6 py-3 rounded-lg border border-white/20 hover:border-white/30 hover:bg-white/5 transition-all"
           >
-            サンプルコード →
+            Usage API →
           </Link>
         </div>
       </div>
