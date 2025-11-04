@@ -23,32 +23,32 @@ export default async function CronLogsPage(context: Context) {
     const jobId = params.jobId;
     const userId = session!.user.id;
 
-    // ジョブ情報を取得
-    const job = jobId
-        ? await prisma.job.findFirst({
-              where: { id: jobId, userId },
-          })
-        : null;
+    const [job, logs] = await Promise.all([
+        jobId ? prisma.job.findUnique({
+            where: {
+                id: jobId ? jobId : undefined,
+                userId: userId
+            }
+        }) : Promise.resolve(null),
 
-    const logs = await prisma.runningLog.findMany({
-        where: {
-            job: {
-                userId,
-                // ...(jobId && { id: jobId }),
+        prisma.runningLog.findMany({
+            where: {
+                ...(jobId && { jobId: jobId }),  // jobIdがある場合のみ追加
+                user: { id: userId },
             },
-        },
-        include: {
-            job: {
-                select: {
-                    name: true,
-                    url: true,
-                    method: true,
+            include: {
+                job: {
+                    select: {
+                        name: true,
+                        url: true,
+                        method: true,
+                    },
                 },
             },
-        },
-        orderBy: { finishedAt: "desc" },
-        take: 100, // 最新100件まで
-    });
+            orderBy: { finishedAt: "desc" },
+            take: 100, // 最新100件まで
+        })
+    ]);
     console.log("logs:", logs);
 
     // 統計情報の計算
