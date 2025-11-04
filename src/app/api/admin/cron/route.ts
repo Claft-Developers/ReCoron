@@ -22,5 +22,5 @@ export async function GET() {
     const jobPromises = dueJobs.map((job) => limit(() => executeCronJob(job)));
     await Promise.all(jobPromises);
 
-    return successResponse({ message: "Cron job triggered" });
+    return successResponse({ message: "Cron job triggered" }, "Cron job triggered");
 }

@@ -50,7 +50,7 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
         await prisma.aPIKey.deleteMany({
             where: { id: keyId, user: { id: auth.userId } },
         });
-        return successResponse({ message: "APIキーが削除されました" });
+        return successResponse(null, "APIキーが削除されました");
     } catch (error) {
         console.error("Failed to delete API key:", error);
         return serverErrorResponse();

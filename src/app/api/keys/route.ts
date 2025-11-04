@@ -6,7 +6,8 @@ import { getAuth } from "@/lib/auth";
 import {
     unauthorizedResponse,
     successResponse,
-    errorResponse,
+    createdResponse,
+    serverErrorResponse,
     validationErrorResponse,
 } from "@/utils/response";
 import { signJWT, generateRandomKey, hashToken } from "@/utils/token";
@@ -28,7 +29,7 @@ export const GET = ((req: NextRequest) => withAuth(req, async (req, payload) => 
 
     } catch (error) {
         console.error("Error in GET /api/keys:", error);
-        return errorResponse("サーバーエラーが発生しました。", 500);
+        return serverErrorResponse("サーバーエラーが発生しました。");
     }
 }));
 
@@ -71,9 +72,9 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
                 expiresAt,
             },
         });
-        return successResponse({ apiKey: newKey, token }, 201);
+        return createdResponse({ apiKey: newKey, token });
     } catch (error) {
         console.error("Error in POST /api/keys:", error);
-        return errorResponse("サーバーエラーが発生しました。", 500);
+        return serverErrorResponse("サーバーエラーが発生しました。");
     }
 }));

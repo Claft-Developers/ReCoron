@@ -64,7 +64,7 @@ export const DELETE = ((req: NextRequest, context: Context) => withAuth(req, asy
             where: { id: jobId, userId: auth.userId },
         });
 
-        return successResponse("ジョブを削除しました");
+        return successResponse(null, "ジョブを削除しました");
     } catch (error) {
         console.error("Failed to delete job:", error);
         return serverErrorResponse();

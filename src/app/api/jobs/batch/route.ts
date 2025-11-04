@@ -66,9 +66,9 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
         const createdJobs = await Promise.all(jobs);
 
         return createdResponse({
-            message: `${createdJobs.length} 件のジョブを作成しました`,
+            count: createdJobs.length,
             jobs: createdJobs
-        });
+        }, `${createdJobs.length} 件のジョブを作成しました`);
     } catch (error) {
         console.error("Batch job creation error:", error);
         return serverErrorResponse("ジョブの一括作成中にエラーが発生しました");
