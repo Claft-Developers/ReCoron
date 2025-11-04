@@ -160,13 +160,29 @@ model APIKey {
 
   lastUsed  DateTime? @map("last_used") // 最終使用日時
   expiresAt DateTime? @map("expires_at") // 有効期限
+  count     Int       @default(0) // 使用回数
 
   scopes  String[]
   enabled Boolean  @default(true)
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  logs APILog[]
 
   @@index([userId])
   @@index([keyHash])
   @@map("api_key")
+}
+
+model APILog {
+  id       String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  apiKeyId  String
+
+  url             String
+  method          Method
+  requestHeaders  Json?
+  requestBody     String?
+
+  apiKey APIKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  @@index([apiKeyId])
 }
