@@ -14,7 +14,8 @@ export async function GET(req: NextRequest) {
     if (token !== TOKEN) {
         return unauthorizedResponse("Invalid cron token");
     }
-    // ここに Cron ジョブのロジックを実装
+    
+    // 通常のCronジョブ実行
     const now = new Date();
     const limit = pLimit(5); // 同時実行数を5に制限
     const dueJobs = await prisma.job.findMany({
