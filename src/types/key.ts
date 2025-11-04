@@ -5,6 +5,7 @@ interface APIKeyPayload {
     keyId: string; // APIKeyのid
     userId: string;
     scopes: APIKeyScopes[];
+    
     iat?: number; // issued at
     exp?: number; // expiration time
     jti?: string; // JWT ID（一意性を持たせる）
