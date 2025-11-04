@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, ExternalLink, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDate } from "@/utils/date";
 import { useState } from "react";
 import type { RunningLog } from "@prisma/client";
@@ -18,11 +18,24 @@ type LogsTableProps = {
     showJobName?: boolean;
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
     const [expandedLog, setExpandedLog] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const totalPages = Math.ceil(logs.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentLogs = logs.slice(startIndex, endIndex);
 
     const toggleExpand = (logId: string) => {
         setExpandedLog(expandedLog === logId ? null : logId);
+    };
+
+    const goToPage = (page: number) => {
+        setCurrentPage(page);
+        setExpandedLog(null); // ページ変更時に展開を閉じる
     };
 
     return (
@@ -42,7 +55,7 @@ export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
                         </tr>
                     </thead>
                     <tbody>
-                        {logs.map((log) => (
+                        {currentLogs.map((log) => (
                             <>
                                 <tr
                                     key={log.id}
@@ -183,6 +196,70 @@ export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
                     </tbody>
                 </table>
             </div>
+            
+            {/* ページネーション */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
+                    <div className="text-sm text-gray-400">
+                        全 {logs.length} 件中 {startIndex + 1} - {Math.min(endIndex, logs.length)} 件を表示
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => goToPage(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="p-2 rounded hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                                // 最初の2ページ、最後の2ページ、現在のページ周辺2ページを表示
+                                const showPage = 
+                                    page <= 2 || 
+                                    page > totalPages - 2 || 
+                                    (page >= currentPage - 1 && page <= currentPage + 1);
+                                
+                                const showEllipsis = 
+                                    (page === 3 && currentPage > 4) || 
+                                    (page === totalPages - 2 && currentPage < totalPages - 3);
+
+                                if (showEllipsis) {
+                                    return (
+                                        <span key={page} className="px-2 text-gray-500">
+                                            ...
+                                        </span>
+                                    );
+                                }
+
+                                if (!showPage) return null;
+
+                                return (
+                                    <button
+                                        key={page}
+                                        onClick={() => goToPage(page)}
+                                        className={`min-w-[2rem] h-8 px-3 rounded text-sm transition-colors ${
+                                            currentPage === page
+                                                ? "bg-blue-500 text-white"
+                                                : "hover:bg-white/5 text-gray-300"
+                                        }`}
+                                    >
+                                        {page}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <button
+                            onClick={() => goToPage(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                            className="p-2 rounded hover:bg-white/5 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
