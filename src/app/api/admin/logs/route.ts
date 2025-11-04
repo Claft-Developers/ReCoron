@@ -14,7 +14,7 @@ const PLAN_RESET_MAP: { [key: string]: Plan } = {
     monthly: "PRO",
 };
 
-export async function GET(req: NextRequest) {
+export async function DELETE(req: NextRequest) {
     const token = req.nextUrl.searchParams.get("token");
     if (token !== TOKEN) {
         return unauthorizedResponse("Invalid admin token");
