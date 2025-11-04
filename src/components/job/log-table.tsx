@@ -100,7 +100,7 @@ export function LogsTable({ logs, showJobName = false }: LogsTableProps) {
                                     <td className="px-6 py-4">
                                         <div className="flex items-center gap-2">
                                             <span className="text-sm text-gray-300 max-w-xs truncate">
-                                                {log.url}
+                                                {(log.url.length > 50) ? `${log.url.slice(0, 30)}...` : log.url}
                                             </span>
                                             <a
                                                 href={log.url}
