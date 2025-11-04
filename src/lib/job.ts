@@ -25,6 +25,12 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
     const headers = (job.headers || {}) as Record<string, string>;
     const body = job.body || undefined;
 
+    const jobRaw = await prisma.job.findUnique({
+        where: { id: job.id }
+    });
+
+    const jobRawValue = jobRaw ? JSON.parse(JSON.stringify(jobRaw)) : undefined;
+
     const payload: Prisma.RunningLogCreateInput = {
         job: { connect: { id: job.id } },
         user: { connect: { id: job.userId } },
@@ -34,6 +40,7 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         responseBody: "",
         status: 0,
         durationMs: 0,
+        jobRaw: jobRawValue,
 
         successful: false,
         type,
