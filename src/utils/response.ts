@@ -3,29 +3,45 @@ import { NextResponse } from "next/server";
 /**
  * 成功レスポンスを返す
  */
-export function successResponse<T>(data: T, status: number = 200) {
-    return NextResponse.json(data, { status });
+export function successResponse<T>(data: T, message: string = "success", status: number = 200) {
+    return NextResponse.json({
+        success: true,
+        message,
+        data,
+    }, { status });
 }
 
 /**
  * 作成成功レスポンス (201 Created)
  */
-export function createdResponse<T>(data: T) {
-    return NextResponse.json(data, { status: 201 });
+export function createdResponse<T>(data: T, message: string = "created") {
+    return NextResponse.json({
+        success: true,
+        message,
+        data,
+    }, { status: 201 });
 }
 
 /**
  * 更新成功レスポンス (200 OK)
  */
-export function updatedResponse<T>(data: T) {
-    return NextResponse.json(data, { status: 200 });
+export function updatedResponse<T>(data: T, message: string = "updated") {
+    return NextResponse.json({
+        success: true,
+        message,
+        data,
+    }, { status: 200 });
 }
 
 /**
- * 削除成功レスポンス (204 No Content)
+ * 削除成功レスポンス (200 OK)
  */
-export function deletedResponse() {
-    return new NextResponse(null, { status: 204 });
+export function deletedResponse(message: string = "deleted") {
+    return NextResponse.json({
+        success: true,
+        message,
+        data: null,
+    }, { status: 200 });
 }
 
 /**
@@ -34,8 +50,9 @@ export function deletedResponse() {
 export function validationErrorResponse(message: string, errors?: Record<string, string[]>) {
     return NextResponse.json(
         {
-            error: message,
-            errors,
+            success: false,
+            message,
+            data: errors || null,
         },
         { status: 400 }
     );
@@ -46,7 +63,11 @@ export function validationErrorResponse(message: string, errors?: Record<string,
  */
 export function unauthorizedResponse(message: string = "認証が必要です") {
     return NextResponse.json(
-        { error: message },
+        { 
+            success: false,
+            message,
+            data: null,
+        },
         { status: 401 }
     );
 }
@@ -56,7 +77,11 @@ export function unauthorizedResponse(message: string = "認証が必要です") 
  */
 export function forbiddenResponse(message: string = "このリソースへのアクセス権限がありません") {
     return NextResponse.json(
-        { error: message },
+        { 
+            success: false,
+            message,
+            data: null,
+        },
         { status: 403 }
     );
 }
@@ -66,7 +91,11 @@ export function forbiddenResponse(message: string = "このリソースへのア
  */
 export function notFoundResponse(resource: string = "リソース") {
     return NextResponse.json(
-        { error: `${resource}が見つかりません` },
+        { 
+            success: false,
+            message: `${resource}が見つかりません`,
+            data: null,
+        },
         { status: 404 }
     );
 }
@@ -76,7 +105,11 @@ export function notFoundResponse(resource: string = "リソース") {
  */
 export function conflictResponse(message: string) {
     return NextResponse.json(
-        { error: message },
+        { 
+            success: false,
+            message,
+            data: null,
+        },
         { status: 409 }
     );
 }
@@ -86,7 +119,11 @@ export function conflictResponse(message: string) {
  */
 export function rateLimitResponse(message: string = "リクエストが多すぎます。しばらく待ってから再試行してください") {
     return NextResponse.json(
-        { error: message },
+        { 
+            success: false,
+            message,
+            data: null,
+        },
         { status: 429 }
     );
 }
@@ -96,7 +133,11 @@ export function rateLimitResponse(message: string = "リクエストが多すぎ
  */
 export function serverErrorResponse(message: string = "サーバーエラーが発生しました") {
     return NextResponse.json(
-        { error: message },
+        { 
+            success: false,
+            message,
+            data: null,
+        },
         { status: 500 }
     );
 }
@@ -106,7 +147,11 @@ export function serverErrorResponse(message: string = "サーバーエラーが�
  */
 export function errorResponse(message: string, status: number = 400) {
     return NextResponse.json(
-        { error: message },
+        { 
+            success: false,
+            message,
+            data: null,
+        },
         { status }
     );
 }
@@ -121,10 +166,15 @@ export function paginatedResponse<T>(
         limit: number;
         total: number;
         totalPages: number;
-    }
+    },
+    message: string = "success"
 ) {
     return NextResponse.json({
-        data,
-        pagination,
+        success: true,
+        message,
+        data: {
+            items: data,
+            pagination,
+        },
     });
 }
