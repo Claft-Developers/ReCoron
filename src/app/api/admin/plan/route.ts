@@ -79,7 +79,8 @@ export async function POST(req: NextRequest) {
 
         if (session) {
             // セッション認証の場合、管理者チェック
-            if (!isAdmin(session.user.email)) {
+            const adminStatus = await isAdmin(session.user.id);
+            if (!adminStatus) {
                 return unauthorizedResponse('管理者権限が必要です');
             }
         } else {

@@ -8,6 +8,7 @@ interface User {
     name: string;
     email: string;
     plan: Plan;
+    isAdmin: boolean;
     createdAt: string;
     _count: {
         jobs: number;
@@ -184,6 +185,7 @@ export default function AdminDashboard() {
                                 <tr>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">ユーザー</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">プラン</th>
+                                    <th className="px-6 py-3 text-left text-sm font-semibold">管理者</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">ジョブ</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">APIキー</th>
                                     <th className="px-6 py-3 text-left text-sm font-semibold">登録日</th>
@@ -207,6 +209,15 @@ export default function AdminDashboard() {
                                             }`}>
                                                 {user.plan}
                                             </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {user.isAdmin ? (
+                                                <span className="px-2 py-1 rounded text-sm font-medium bg-orange-500/20 text-orange-400">
+                                                    管理者
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-400">-</span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4">{user._count.jobs}</td>
                                         <td className="px-6 py-4">{user._count.apiKeys}</td>

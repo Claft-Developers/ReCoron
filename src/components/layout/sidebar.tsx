@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "@/lib/auth-client";
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
 
 const navigation = [
   { name: "Home", href: "/jobs", icon: Home },
@@ -37,6 +37,7 @@ export function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [isAdminUser, setIsAdminUser] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -47,12 +48,24 @@ export function Sidebar() {
   const userName = session?.user?.name || "ユーザー";
   const userInitial = userName.charAt(0).toUpperCase();
 
-  // 管理者チェック
-  const isAdminUser = useMemo(() => {
-    if (!session?.user?.email) return false;
-    const adminEmails = (process.env.NEXT_PUBLIC_ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-    return adminEmails.includes(session.user.email);
-  }, [session?.user?.email]);
+  // 管理者ステータスをAPIから取得
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const checkAdminStatus = async () => {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          setIsAdminUser(data.data?.isAdmin ?? false);
+        }
+      } catch (error) {
+        console.error('Failed to check admin status:', error);
+      }
+    };
+
+    checkAdminStatus();
+  }, [session?.user]);
 
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 border-r border-gray-3 bg-gray-1">

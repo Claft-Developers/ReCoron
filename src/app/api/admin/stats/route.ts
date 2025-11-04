@@ -25,7 +25,8 @@ export async function GET(req: NextRequest) {
             return unauthorizedResponse('認証が必要です');
         }
 
-        if (!isAdmin(session.user.email)) {
+        const adminStatus = await isAdmin(session.user.id);
+        if (!adminStatus) {
             return unauthorizedResponse('管理者権限が必要です');
         }
 

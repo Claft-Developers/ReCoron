@@ -147,8 +147,23 @@ GOOGLE_CLIENT_SECRET=your-google-client-secret
 
 # Admin Configuration
 ADMIN_SECRET_TOKEN=your-admin-secret-token
-ADMIN_EMAILS=admin@example.com,admin2@example.com
-NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com,admin2@example.com
+# Note: Admin users are managed in the database via User.isAdmin field
+```
+
+### 管理者ユーザーの設定
+
+管理者ユーザーを設定するには、データベースで直接`isAdmin`フィールドを`true`に設定します：
+
+```sql
+-- PostgreSQL
+UPDATE "user" SET "isAdmin" = true WHERE email = 'admin@example.com';
+```
+
+または、Prisma Studioを使用：
+
+```bash
+npx prisma studio
+# Userテーブルで該当ユーザーのisAdminをtrueに設定
 ```
 
 ### 開発サーバーの起動
@@ -249,13 +264,13 @@ ReCoronには管理者向けの強力な管理パネルが用意されていま�
 
 ### アクセス方法
 
-1. **環境変数の設定**:
-   ```bash
-   ADMIN_EMAILS=admin@example.com,admin2@example.com
-   NEXT_PUBLIC_ADMIN_EMAILS=admin@example.com,admin2@example.com
+1. **管理者ユーザーの設定**:
+   データベースで`isAdmin`フィールドを`true`に設定：
+   ```sql
+   UPDATE "user" SET "isAdmin" = true WHERE email = 'admin@example.com';
    ```
 
-2. **管理者メールアドレスでログイン**
+2. **管理者アカウントでログイン**
 
 3. **サイドバーから「管理者パネル」にアクセス** (`/admin`)
 
