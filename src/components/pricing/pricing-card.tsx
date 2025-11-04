@@ -61,10 +61,10 @@ export function PricingCard({
             </ul>
 
             <Button
-                className={`w-full ${
+                className={`w-full cursor-pointer font-semibold transition-all ${
                     popular
-                        ? "bg-white text-black hover:bg-gray-200"
-                        : "bg-white/10 hover:bg-white/20"
+                        ? "bg-white text-black hover:bg-gray-100 hover:shadow-lg hover:scale-[1.02] shadow-md"
+                        : "bg-white/50 text-black hover:bg-white hover:shadow-lg hover:scale-[1.02]"
                 }`}
             >
                 {cta}
