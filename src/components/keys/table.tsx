@@ -1,9 +1,11 @@
 "use client";
 import { APIKey } from "@prisma/client";
-import { Copy, Eye, EyeOff, Trash2, MoreVertical, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
-import { formatDate } from "@/utils/date";
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Copy, Trash2, CheckCircle2, XCircle, Clock, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatDate } from "@/utils/date";
+
 
 interface Props {
     apiKeys: APIKey[];
@@ -12,6 +14,7 @@ interface Props {
 const ITEMS_PER_PAGE = 10;
 
 export function APIKeysTable({ apiKeys }: Props) {
+    const router = useRouter();
     const [copiedId, setCopiedId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -20,20 +23,45 @@ export function APIKeysTable({ apiKeys }: Props) {
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const currentKeys = apiKeys.slice(startIndex, endIndex);
 
-    const copyToClipboard = (text: string, id: string) => {
+    const copyToClipboard = ((text: string, id: string) => {
         navigator.clipboard.writeText(text);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 2000);
-    };
+    });
 
-    const isExpired = (expiresAt: Date | null) => {
+    const isExpired = ((expiresAt: Date | null) => {
         if (!expiresAt) return false;
         return new Date(expiresAt) < new Date();
-    };
+    });
 
-    const goToPage = (page: number) => {
+    const goToPage = ((page: number) => {
         setCurrentPage(page);
-    };
+    });
+
+    const handleDelete = (async (keyId: string) => {
+        if (!confirm("本当にこのAPIキーを削除しますか？この操作は取り消せません。")) {
+            return;
+        }
+
+        const toastId = toast.loading("APIキーを削除中...");
+
+        try {
+            const response = await fetch(`/api/keys/${keyId}`, {
+                method: "DELETE",
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message || "APIキーの削除に失敗しました");
+            }
+
+            toast.success("APIキーを削除しました", { id: toastId });
+            router.refresh();
+        } catch (error: any) {
+            console.error("Failed to delete API key:", error);
+            toast.error(error.message || "APIキーの削除に失敗しました", { id: toastId });
+        }
+    });
 
     return (
         <div className="bg-white/[0.02] border border-white/10 rounded-lg overflow-hidden">
@@ -136,6 +164,7 @@ export function APIKeysTable({ apiKeys }: Props) {
                                                 )}
                                             </button>
                                             <button
+                                                onClick={() => handleDelete(key.id)}
                                                 className="p-2 rounded hover:bg-white/5 transition-colors text-red-400"
                                                 title="削除"
                                             >
