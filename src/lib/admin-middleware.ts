@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { prisma } from "./prisma";
 import { unauthorizedResponse } from "@/utils/response";
 
 /**
@@ -19,11 +20,18 @@ export async function withAdminAuth<T>(
 }
 
 /**
- * 管理者セッション認証（Cookie ベース）
- * 将来的に管理者ダッシュボードUIで使用
+ * 管理者セッション認証（データベースベース）
+ * ユーザーのisAdminフィールドをチェック
  */
-export function isAdmin(email: string): boolean {
-    // 環境変数から管理者メールアドレスのリストを取得
-    const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim()).filter(Boolean);
-    return adminEmails.includes(email);
+export async function isAdmin(userId: string): Promise<boolean> {
+    try {
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { isAdmin: true },
+        });
+        return user?.isAdmin ?? false;
+    } catch (error) {
+        console.error('Failed to check admin status:', error);
+        return false;
+    }
 }
