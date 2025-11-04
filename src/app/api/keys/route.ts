@@ -7,6 +7,7 @@ import {
     unauthorizedResponse,
     successResponse,
     errorResponse,
+    validationErrorResponse,
 } from "@/utils/response";
 import { signJWT, generateRandomKey, hashToken } from "@/utils/token";
 
@@ -46,7 +47,7 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
 
         scopes?.forEach((scope: string) => {
             if (!["read:jobs", "write:jobs", "read:logs", "write:logs", "read:keys", "write:keys"].includes(scope)) {
-                throw new Error(`無効なスコープが指定されました: ${scope}`);
+                return validationErrorResponse(`無効なスコープが指定されました: ${scope}`);
             }
         });
 
