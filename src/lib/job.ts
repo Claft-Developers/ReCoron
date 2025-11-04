@@ -2,6 +2,7 @@ import { Prisma, Job, Type, User, Method } from "@prisma/client";
 import { CronExpressionParser } from "cron-parser";
 import { PRICING_TIERS } from "@/constants/plan";
 import { prisma } from "@/lib/prisma";
+import { count } from "console";
 
 const TIMEOUT = 10 * 1000; // 10秒
 
@@ -12,14 +13,6 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         currentDate: job.nextRunAt || now
     });
     const nextRun = interval.next().toDate();
-
-    // ジョブの次回実行時刻を更新
-    if (type === Type.AUTO) {
-        await prisma.job.update({
-            where: { id: job.id },
-            data: { nextRunAt: nextRun }
-        });
-    }
 
 
     const url = job.url;
@@ -74,6 +67,13 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         const lastRunAt = new Date();
         payload.finishedAt = lastRunAt;
         payload.durationMs = payload.finishedAt.getTime() - now.getTime();
+        
+        const updatePayload = {
+            lastRunAt,
+        }
+        if (type === Type.AUTO) {
+            Object.assign(updatePayload, { nextRunAt: nextRun });
+        }
 
         void (async () => { // 非同期で実行
             try {
@@ -81,11 +81,7 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
                     prisma.runningLog.create({ data: payload }),
                     prisma.job.update({
                         where: { id: job.id },
-                        data: {
-                            lastRunAt,
-                            count: { increment: 1 },
-                            failureCount: payload.successful ? { increment: 0 } : { increment: 1 },
-                        },
+                        data: updatePayload,
                     }),
                 ]);
             } catch (e) {
