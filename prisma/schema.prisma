@@ -51,9 +51,6 @@ model Job {
   lastRunAt DateTime?
   nextRunAt DateTime?
 
-  failureCount Int @default(0)
-  count        Int @default(0)
-
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   runningLogs RunningLog[]
 
