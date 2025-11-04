@@ -32,12 +32,12 @@ export default function Header() {
                 {/* CTA Buttons */}
                 <div className="flex items-center gap-3">
                     <Link href={`/login`}>
-                        <Button variant="ghost" size="sm" className="hidden sm:flex">
+                        <Button variant="ghost" size="sm" className="hidden sm:flex cursor-pointer">
                             ログイン
                         </Button>
                     </Link>
                     <Link href={`/signup`}>
-                        <Button size="sm">
+                        <Button size="sm" className="cursor-pointer">
                             無料で始める
                         </Button>
                     </Link>
