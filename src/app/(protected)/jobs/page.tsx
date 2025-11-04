@@ -13,13 +13,14 @@ export default async function JobsPage() {
     const [jobs, logs] = await Promise.all([
         prisma.job.findMany({
             where: { userId: session!.user.id },
+            include: { runningLogs: true },
             orderBy: { lastRunAt: "desc" },
         }),
         prisma.runningLog.findMany({
             where: { user: { id: session!.user.id } },
             orderBy: { startedAt: "desc" },
         })
-    ])
+    ]);
 
 
     return (

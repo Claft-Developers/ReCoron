@@ -1,5 +1,5 @@
 "use client";
-import type { Job } from "@prisma/client";
+import type { Job, RunningLog } from "@prisma/client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,13 +10,14 @@ import { formatDate } from "@/utils/date";
 
 
 type JobTableRowProps = {
-    job: Job;
+    job: Job & { runningLogs: RunningLog[] };
 };
 
 export function JobTableRow({ job }: JobTableRowProps) {
     const router = useRouter();
-    const [isDeleting, setIsDeleting] = useState(false);
-    const [isToggling, setIsToggling] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<boolean>(false);
+    const [isToggling, setIsToggling] = useState<boolean>(false);
+    const [runningLogs] = useState<RunningLog[]>(job.runningLogs || []);
 
     const handleToggleEnabled = async () => {
         setIsToggling(true);
@@ -130,11 +131,11 @@ export function JobTableRow({ job }: JobTableRowProps) {
             </td>
             <td className="px-6 py-4">
                 <div className="text-sm">
-                    <div className="text-gray-300">{job.count} 回</div>
-                    {job.failureCount > 0 && (
+                    <div className="text-gray-300">{runningLogs.length} 回</div>
+                    {runningLogs.some(log => !log.successful) && (
                         <div className="flex items-center gap-1 text-red-500">
                             <XCircle className="w-3 h-3" />
-                            {job.failureCount} 失敗
+                            {runningLogs.filter(log => !log.successful).length} 失敗
                         </div>
                     )}
                 </div>
