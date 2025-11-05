@@ -29,11 +29,17 @@ export const POST = ((req: NextRequest, context: Context) => withAuth(req, async
 
         const job = await prisma.job.findUnique({
             where: { id: jobId, userId: auth.userId },
+            include: {
+                WebhookJobs: true,
+            }
         });
         if (!job) {
             return notFoundResponse("ジョブが見つかりません");
         }
-        const result = await executeCronJob(job, "MANUAL");
+        const result = await executeCronJob({
+            ...job,
+            webhookJobs: job.WebhookJobs
+        }, "MANUAL");
 
         return successResponse({
             job,

@@ -23,8 +23,14 @@ export async function GET(req: NextRequest) {
             nextRunAt: { lte: now },
             enabled: true,
         },
+        include: {
+            WebhookJobs: true,
+        }
     });
-    const jobPromises = dueJobs.map((job) => limit(() => executeCronJob(job)));
+    const jobPromises = dueJobs.map((job) => limit(() => executeCronJob({
+        ...job,
+        webhookJobs: job.WebhookJobs
+    })));
     await Promise.all(jobPromises);
 
     return successResponse({ message: "Cron job triggered" }, "Cron job triggered");
