@@ -200,6 +200,7 @@ model WebhookJobs {
 
   jobId    String @unique
   endpoint String
+  secret   String /// Webhook署名検証用シークレット
 
   headers   Json?
   createdAt DateTime @default(now())
