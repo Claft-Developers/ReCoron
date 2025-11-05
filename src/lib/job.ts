@@ -1,12 +1,18 @@
-import { Prisma, Job, Type, User, Method } from "@prisma/client";
+import { Prisma, Job, Type, User, Method, WebhookJobs } from "@prisma/client";
 import { CronExpressionParser } from "cron-parser";
 import { PRICING_TIERS } from "@/constants/plan";
 import { prisma } from "@/lib/prisma";
+import { generateRandomKey } from "@/utils/token";
 import { checkJobExecutionLimit, recordJobExecution } from "@/utils/usage-tracking";
+import { generateWebhookSignature } from "@/utils/webhook";
 
 const TIMEOUT = 10 * 1000; // 10秒
 
-export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
+interface JobWithWebhook extends Job {
+    webhookJobs: WebhookJobs | null;
+}
+
+export async function executeCronJob(job: JobWithWebhook, type: Type = Type.AUTO) {
     const now = new Date();
     const interval = CronExpressionParser.parse(job.schedule, {
         tz: job.timezone || "Asia/Tokyo",
@@ -90,21 +96,46 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
         const lastRunAt = new Date();
         payload.finishedAt = lastRunAt;
         payload.durationMs = payload.finishedAt.getTime() - now.getTime();
-        
-        
+
+
         const updatePayload: Prisma.JobUpdateInput = {
             lastRunAt,
         };
-        
+
         // 自動実行の場合のみnextRunAtを更新
         if (type === Type.AUTO) {
             updatePayload.nextRunAt = nextRun;
         }
-        
+
         // 成功した場合のみカウントをインクリメント
         if (payload.successful) {
             updatePayload.count = { increment: 1 };
         }
+
+        const webhookPayload = {
+            id: generateRandomKey(16),
+            job,
+
+            result: {
+                status: payload.successful ? "success" : "failure",
+                code: payload.status,
+                response: {
+                    headers: payload.responseHeaders,
+                    body: payload.responseBody,
+                },
+
+                startedAt: payload.startedAt,
+                finishedAt: payload.finishedAt,
+                durationMs: payload.durationMs,
+
+                trigger: type,
+            },
+
+            webhook: {
+                sendAt: new Date(),
+            }
+
+        };
 
         void (async () => { // 非同期で実行
             try {
@@ -114,8 +145,31 @@ export async function executeCronJob(job: Job, type: Type = Type.AUTO) {
                         where: { id: job.id },
                         data: updatePayload,
                     }),
+                    (async () => {
+                        // Webhookが設定されている場合、実行結果を送信
+                        if (job.webhookJobs) {
+                            try {
+                                const payloadString = JSON.stringify(webhookPayload);
+                                const signature = await generateWebhookSignature(payloadString, job.webhookJobs.secret);
+
+                                await fetch(job.webhookJobs.endpoint, {
+                                    method: "POST",
+                                    headers: {
+                                        "Content-Type": "application/json",
+                                        "X-Webhook-ID": webhookPayload.id,
+                                        "X-Signature": signature,
+                                        ...((job.webhookJobs.headers || {}) as Record<string, string>),
+                                    },
+                                    body: payloadString,
+                                });
+                                console.log(`Webhook sent for job ${job.id} to ${job.webhookJobs.endpoint}`);
+                            } catch (webhookError) {
+                                console.error(`Failed to send webhook for job ${job.id}:`, webhookError);
+                            }
+                        }
+                    })()
                 ]);
-                
+
                 // 成功した場合、実行を記録
                 if (payload.successful) {
                     await recordJobExecution(job.userId);
