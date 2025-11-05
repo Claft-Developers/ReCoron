@@ -3,8 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { 
   Home, 
-  Clock, 
-  Settings, 
+  Clock,
   CreditCard, 
   HelpCircle,
   KeyRound,
@@ -12,7 +11,8 @@ import {
   ArrowUpDown,
   Logs,
   ScrollText,
-  Shield
+  Shield,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "@/lib/auth-client";
@@ -25,7 +25,7 @@ const navigation = [
   { name: "API Keys", href: "/keys", icon: KeyRound },
   { name: "API Logs", href: "/keys/logs", icon: ScrollText },
   { name: "Webhooks", href: "/webhooks", icon: ArrowUpDown },
-  { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Buildings", href: "/buildings", icon: Wallet },
 ];
 
 const bottomNavigation = [
