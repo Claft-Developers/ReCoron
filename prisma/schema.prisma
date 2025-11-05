@@ -13,12 +13,18 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ==========================================
+// Enums
+// ==========================================
+
+/// プランの種類
 enum Plan {
-  FREE
-  HOBBY
-  PRO
+  FREE // 無料プラン: 5ジョブ、500実行/月
+  HOBBY // 趣味プラン: 20ジョブ、10,000実行/月
+  PRO // プロプラン: 100ジョブ、50,000実行/月
 }
 
+/// HTTPメソッド
 enum Method {
   GET
   POST
@@ -27,63 +33,18 @@ enum Method {
   PATCH
 }
 
+/// ジョブ実行タイプ
 enum Type {
-  AUTO
-  MANUAL
+  AUTO // 自動実行（スケジュール）
+  MANUAL // 手動実行
 }
 
-model Job {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
+// ==========================================
+// 認証関連モデル (Better Auth)
+// ==========================================
 
-  name     String
-  schedule String
-  timezone String @default("Asia/Tokyo")
-
-  url     String
-  method  Method  @default(GET)
-  headers Json?
-  body    String?
-
-  enabled   Boolean   @default(true)
-  lastRunAt DateTime?
-  nextRunAt DateTime?
-  count     Int       @default(0)
-
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  runningLogs RunningLog[]
-
-  @@index([userId])
-  @@index([enabled, nextRunAt])
-}
-
-model RunningLog {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  jobId     String?
-  userId    String   @map("user_id")
-  type      Type     @default(AUTO)
-
-  startedAt  DateTime
-  finishedAt DateTime @default(now())
-
-  url             String
-  status          Int
-  responseBody    String?
-  responseHeaders Json?
-  durationMs      Int
-
-  successful Boolean @default(true)
-
-  job  Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([jobId])
-  @@index([createdAt])
-}
-
+/// ユーザー情報
+/// プラン管理と管理者権限を含む
 model User {
   id            String    @id
   name          String
@@ -95,21 +56,25 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  plan    Plan    @default(FREE)
-  isAdmin Boolean @default(false)
+  // プラン情報
+  plan    Plan    @default(FREE) // ユーザーの料金プラン
+  isAdmin Boolean @default(false) // 管理者権限フラグ
 
-  jobs    Job[]
-  logs    RunningLog[]
-  apiKeys APIKey[]
-
+  // リレーション
+  jobs              Job[]
+  logs              RunningLog[]
+  apiKeys           APIKey[]
   monthlyUsages     MonthlyUsage[]
   resourceHistories ResourceHistory[]
   dailyUsages       DailyUsage[]
+  WebhookJobs       WebhookJobs[]
 
   @@unique([email])
   @@map("user")
 }
 
+/// セッション情報
+/// Better Authによって管理される認証セッション
 model Session {
   id        String   @id
   expiresAt DateTime
@@ -125,6 +90,8 @@ model Session {
   @@map("session")
 }
 
+/// アカウント情報
+/// OAuth連携情報やパスワード認証情報を管理
 model Account {
   id                    String    @id
   accountId             String
@@ -144,6 +111,8 @@ model Account {
   @@map("account")
 }
 
+/// 検証情報
+/// メール認証などの検証トークンを管理
 model Verification {
   id         String   @id
   identifier String
@@ -155,22 +124,116 @@ model Verification {
   @@map("verification")
 }
 
+// ==========================================
+// コア機能モデル
+// ==========================================
+
+/// Cronジョブ
+/// スケジュール実行されるHTTPリクエストを管理
+model Job {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+
+  // ジョブ基本情報
+  name     String // ジョブ名
+  schedule String // Cron式（例: "0 9 * * *"）
+  timezone String @default("Asia/Tokyo") // タイムゾーン
+
+  // HTTPリクエスト設定
+  url     String // リクエスト先URL
+  method  Method  @default(GET) // HTTPメソッド
+  headers Json? // カスタムヘッダー
+  body    String? // リクエストボディ
+
+  // ジョブステータス
+  enabled   Boolean   @default(true) // 有効/無効
+  lastRunAt DateTime? // 最終実行日時
+  nextRunAt DateTime? // 次回実行予定日時
+  count     Int       @default(0) // 実行回数
+
+  // リレーション
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runningLogs RunningLog[]
+  WebhookJobs WebhookJobs?
+
+  @@index([userId])
+  @@index([enabled, nextRunAt])
+}
+
+/// 実行ログ
+/// ジョブの実行結果を記録
+model RunningLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  jobId     String?
+  userId    String   @map("user_id")
+  type      Type     @default(AUTO) // 実行タイプ（自動/手動）
+
+  // 実行時間
+  startedAt  DateTime // 実行開始時刻
+  finishedAt DateTime @default(now()) // 実行完了時刻
+
+  // レスポンス情報
+  url             String // リクエストURL
+  status          Int // HTTPステータスコード
+  responseBody    String? // レスポンスボディ
+  responseHeaders Json? // レスポンスヘッダー
+  durationMs      Int // 実行時間（ミリ秒）
+
+  successful Boolean @default(true) // 成功/失敗
+
+  // リレーション
+  job  Job? @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([jobId])
+  @@index([createdAt])
+}
+
+/// Webhookジョブ
+/// 外部サービスからのHTTPリクエストを受け付けるジョブ
+model WebhookJobs {
+  id     String @id @default(cuid())
+  userId String
+
+  jobId    String @unique
+  endpoint String
+
+  headers   Json?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  job  Job  @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("webhook_jobs")
+}
+
+/// APIキー
+/// プログラマティックアクセス用の認証キー
 model APIKey {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   userId    String
 
-  name    String
-  keyHash String @unique @map("key_hash") // トークンのハッシュ値
+  name    String // APIキー名（識別用）
+  keyHash String @unique @map("key_hash") // トークンのハッシュ値（セキュリティ）
 
+  // 使用状況
   lastUsed  DateTime? @map("last_used") // 最終使用日時
   expiresAt DateTime? @map("expires_at") // 有効期限
   count     Int       @default(0) // 使用回数
 
-  scopes  String[]
-  enabled Boolean  @default(true)
+  // 権限設定
+  scopes  String[] // アクセススコープ（例: ["read:jobs", "write:jobs"]）
+  enabled Boolean  @default(true) // 有効/無効
 
+  // リレーション
   user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   logs APILog[]
 
@@ -179,41 +242,50 @@ model APIKey {
   @@map("api_key")
 }
 
+/// APIログ
+/// APIキーを使用したリクエストの履歴
 model APILog {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
   apiKeyId  String
 
-  url            String
-  method         Method
-  requestHeaders Json?
-  requestBody    String?
+  // リクエスト情報
+  url            String // リクエストURL
+  method         Method // HTTPメソッド
+  requestHeaders Json? // リクエストヘッダー
+  requestBody    String? // リクエストボディ
 
+  // リレーション
   apiKey APIKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
 
   @@index([apiKeyId])
 }
 
-// ユーザーの月次使用量を追跡（削除されたリソースの履歴も含む）
+// ==========================================
+// 使用量追跡モデル
+// ==========================================
+
+/// 月次使用量
+/// ユーザーの月ごとの使用量と課金情報を追跡
+/// 削除されたリソースの使用量も含む
 model MonthlyUsage {
   id     String @id @default(cuid())
   userId String
   year   Int // 年
   month  Int // 月 (1-12)
 
-  // 実行回数（削除されたJobの実行も含む）
-  totalExecutions Int @default(0)
-
-  // API呼び出し回数（削除されたAPIKeyの呼び出しも含む）
-  totalApiCalls Int @default(0)
+  // 使用量（削除されたリソースも含む）
+  totalExecutions Int @default(0) // 総ジョブ実行回数
+  totalApiCalls   Int @default(0) // 総API呼び出し回数
 
   // 課金情報
   billedAmount Decimal @default(0) @db.Decimal(10, 2) // 課金額
-  paid         Boolean @default(false) // 支払い済みかどうか
+  paid         Boolean @default(false) // 支払い済みフラグ
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // リレーション
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, year, month])
@@ -222,49 +294,50 @@ model MonthlyUsage {
   @@map("monthly_usage")
 }
 
-// リソースの作成・削除履歴を追跡
-model ResourceHistory {
-  id     String @id @default(cuid())
-  userId String
-
-  resourceType String // "JOB" | "API_KEY"
-  resourceId   String // Job ID or APIKey ID
-  action       String // "CREATED" | "DELETED"
-
-  createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, resourceType])
-  @@index([createdAt])
-  @@map("resource_history")
-}
-
-// 日次使用量（より細かい追跡用）
+/// 日次使用量
+/// より細かい粒度での使用量追跡
 model DailyUsage {
   id     String   @id @default(cuid())
   userId String
   date   DateTime @db.Date // 日付
 
-  // その日の実行回数
-  executions Int @default(0)
+  // その日の使用量
+  executions Int @default(0) // 実行回数
+  apiCalls   Int @default(0) // API呼び出し回数
 
-  // その日のAPI呼び出し回数
-  apiCalls Int @default(0)
-
-  // ピーク時のJob数（その日の最大同時存在Job数）
-  peakJobCount Int @default(0)
-
-  // ピーク時のAPIKey数（その日の最大同時存在APIKey数）
-  peakApiKeyCount Int @default(0)
+  // ピーク値（その日の最大同時存在数）
+  peakJobCount    Int @default(0) // 最大ジョブ数
+  peakApiKeyCount Int @default(0) // 最大APIキー数
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // リレーション
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date])
   @@index([userId])
   @@index([date])
   @@map("daily_usage")
+}
+
+/// リソース履歴
+/// ジョブやAPIキーの作成・削除を追跡
+/// 悪用防止（頻繁な作成削除）のために使用
+model ResourceHistory {
+  id     String @id @default(cuid())
+  userId String
+
+  resourceType String // リソースタイプ: "JOB" | "API_KEY"
+  resourceId   String // Job ID or APIKey ID
+  action       String // アクション: "CREATED" | "DELETED"
+
+  createdAt DateTime @default(now())
+
+  // リレーション
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, resourceType])
+  @@index([createdAt])
+  @@map("resource_history")
 }
