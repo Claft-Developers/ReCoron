@@ -160,18 +160,27 @@ export async function checkJobCreationLimit(userId: string, userPlan: Plan): Pro
  * ジョブ作成を記録
  */
 export async function recordJobCreation(userId: string, jobId: string) {
-    await recordResourceHistory(userId, 'JOB', jobId, 'CREATED');
-
-    // 日次使用量のピークジョブ数を更新
     const currentJobCount = await prisma.job.count({ where: { userId } });
     const dailyUsage = await getOrCreateDailyUsage(userId);
 
-    if (currentJobCount > dailyUsage.peakJobCount) {
-        await prisma.dailyUsage.update({
-            where: { id: dailyUsage.id },
-            data: { peakJobCount: currentJobCount },
-        });
-    }
+    // トランザクション内で複数の操作を実行
+    await prisma.$transaction([
+        prisma.resourceHistory.create({
+            data: {
+                userId,
+                resourceType: 'JOB',
+                resourceId: jobId,
+                action: 'CREATED',
+            },
+        }),
+        ...(currentJobCount > dailyUsage.peakJobCount
+            ? [prisma.dailyUsage.update({
+                where: { id: dailyUsage.id },
+                data: { peakJobCount: currentJobCount },
+            })]
+            : []
+        ),
+    ]);
 }
 
 /**
@@ -243,18 +252,27 @@ export async function checkApiKeyCreationLimit(userId: string, userPlan: Plan): 
  * APIキー作成を記録
  */
 export async function recordApiKeyCreation(userId: string, apiKeyId: string) {
-    await recordResourceHistory(userId, 'API_KEY', apiKeyId, 'CREATED');
-
-    // 日次使用量のピークAPIキー数を更新
     const currentApiKeyCount = await prisma.aPIKey.count({ where: { userId } });
     const dailyUsage = await getOrCreateDailyUsage(userId);
 
-    if (currentApiKeyCount > dailyUsage.peakApiKeyCount) {
-        await prisma.dailyUsage.update({
-            where: { id: dailyUsage.id },
-            data: { peakApiKeyCount: currentApiKeyCount },
-        });
-    }
+    // トランザクション内で複数の操作を実行
+    await prisma.$transaction([
+        prisma.resourceHistory.create({
+            data: {
+                userId,
+                resourceType: 'API_KEY',
+                resourceId: apiKeyId,
+                action: 'CREATED',
+            },
+        }),
+        ...(currentApiKeyCount > dailyUsage.peakApiKeyCount
+            ? [prisma.dailyUsage.update({
+                where: { id: dailyUsage.id },
+                data: { peakApiKeyCount: currentApiKeyCount },
+            })]
+            : []
+        ),
+    ]);
 }
 
 /**
@@ -304,40 +322,40 @@ export async function recordJobExecution(userId: string) {
     const { year, month } = getCurrentYearMonth();
     const date = getTodayDate();
 
-    // 月次使用量を更新
-    await prisma.monthlyUsage.upsert({
-        where: {
-            userId_year_month: { userId, year, month },
-        },
-        update: {
-            totalExecutions: { increment: 1 },
-        },
-        create: {
-            userId,
-            year,
-            month,
-            totalExecutions: 1,
-            totalApiCalls: 0,
-        },
-    });
-
-    // 日次使用量を更新
-    await prisma.dailyUsage.upsert({
-        where: {
-            userId_date: { userId, date },
-        },
-        update: {
-            executions: { increment: 1 },
-        },
-        create: {
-            userId,
-            date,
-            executions: 1,
-            apiCalls: 0,
-            peakJobCount: 0,
-            peakApiKeyCount: 0,
-        },
-    });
+    // トランザクション内で月次と日次の使用量を同時に更新
+    await prisma.$transaction([
+        prisma.monthlyUsage.upsert({
+            where: {
+                userId_year_month: { userId, year, month },
+            },
+            update: {
+                totalExecutions: { increment: 1 },
+            },
+            create: {
+                userId,
+                year,
+                month,
+                totalExecutions: 1,
+                totalApiCalls: 0,
+            },
+        }),
+        prisma.dailyUsage.upsert({
+            where: {
+                userId_date: { userId, date },
+            },
+            update: {
+                executions: { increment: 1 },
+            },
+            create: {
+                userId,
+                date,
+                executions: 1,
+                apiCalls: 0,
+                peakJobCount: 0,
+                peakApiKeyCount: 0,
+            },
+        }),
+    ]);
 }
 
 /**
@@ -371,40 +389,40 @@ export async function recordApiCall(userId: string) {
     const { year, month } = getCurrentYearMonth();
     const date = getTodayDate();
 
-    // 月次使用量を更新
-    await prisma.monthlyUsage.upsert({
-        where: {
-            userId_year_month: { userId, year, month },
-        },
-        update: {
-            totalApiCalls: { increment: 1 },
-        },
-        create: {
-            userId,
-            year,
-            month,
-            totalExecutions: 0,
-            totalApiCalls: 1,
-        },
-    });
-
-    // 日次使用量を更新
-    await prisma.dailyUsage.upsert({
-        where: {
-            userId_date: { userId, date },
-        },
-        update: {
-            apiCalls: { increment: 1 },
-        },
-        create: {
-            userId,
-            date,
-            executions: 0,
-            apiCalls: 1,
-            peakJobCount: 0,
-            peakApiKeyCount: 0,
-        },
-    });
+    // トランザクション内で月次と日次の使用量を同時に更新
+    await prisma.$transaction([
+        prisma.monthlyUsage.upsert({
+            where: {
+                userId_year_month: { userId, year, month },
+            },
+            update: {
+                totalApiCalls: { increment: 1 },
+            },
+            create: {
+                userId,
+                year,
+                month,
+                totalExecutions: 0,
+                totalApiCalls: 1,
+            },
+        }),
+        prisma.dailyUsage.upsert({
+            where: {
+                userId_date: { userId, date },
+            },
+            update: {
+                apiCalls: { increment: 1 },
+            },
+            create: {
+                userId,
+                date,
+                executions: 0,
+                apiCalls: 1,
+                peakJobCount: 0,
+                peakApiKeyCount: 0,
+            },
+        }),
+    ]);
 }
 
 /**

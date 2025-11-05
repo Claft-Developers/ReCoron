@@ -139,36 +139,36 @@ export async function executeCronJob(job: JobWithWebhook, type: Type = Type.AUTO
 
         void (async () => { // 非同期で実行
             try {
-                await Promise.all([
+                // データベース操作をトランザクション内で実行
+                await prisma.$transaction([
                     prisma.runningLog.create({ data: payload }),
                     prisma.job.update({
                         where: { id: job.id },
                         data: updatePayload,
                     }),
-                    (async () => {
-                        // Webhookが設定されている場合、実行結果を送信
-                        if (job.webhookJobs) {
-                            try {
-                                const payloadString = JSON.stringify(webhookPayload);
-                                const signature = await generateWebhookSignature(payloadString, job.webhookJobs.secret);
-
-                                await fetch(job.webhookJobs.endpoint, {
-                                    method: "POST",
-                                    headers: {
-                                        "Content-Type": "application/json",
-                                        "X-Webhook-ID": webhookPayload.id,
-                                        "X-Signature": signature,
-                                        ...((job.webhookJobs.headers || {}) as Record<string, string>),
-                                    },
-                                    body: payloadString,
-                                });
-                                console.log(`Webhook sent for job ${job.id} to ${job.webhookJobs.endpoint}`);
-                            } catch (webhookError) {
-                                console.error(`Failed to send webhook for job ${job.id}:`, webhookError);
-                            }
-                        }
-                    })()
                 ]);
+
+                // Webhookが設定されている場合、実行結果を送信
+                if (job.webhookJobs) {
+                    try {
+                        const payloadString = JSON.stringify(webhookPayload);
+                        const signature = await generateWebhookSignature(payloadString, job.webhookJobs.secret);
+
+                        await fetch(job.webhookJobs.endpoint, {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-Webhook-ID": webhookPayload.id,
+                                "X-Signature": signature,
+                                ...((job.webhookJobs.headers || {}) as Record<string, string>),
+                            },
+                            body: payloadString,
+                        });
+                        console.log(`Webhook sent for job ${job.id} to ${job.webhookJobs.endpoint}`);
+                    } catch (webhookError) {
+                        console.error(`Failed to send webhook for job ${job.id}:`, webhookError);
+                    }
+                }
 
                 // 成功した場合、実行を記録
                 if (payload.successful) {

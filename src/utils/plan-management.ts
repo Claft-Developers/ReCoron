@@ -224,10 +224,10 @@ export async function changeUserPlan(userId: string, newPlan: Plan) {
         };
     }
 
-    // プラン変更時の制限適用
+    // プラン変更時の制限適用（ジョブとAPIキーの無効化）
     const restrictions = await handlePlanChange(userId, newPlan, oldPlan);
 
-    // プランを更新
+    // プラン更新はトランザクション内で実行（制限適用後）
     await prisma.user.update({
         where: { id: userId },
         data: { plan: newPlan },

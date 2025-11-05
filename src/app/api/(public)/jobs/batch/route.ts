@@ -59,10 +59,10 @@ export const POST = ((req: NextRequest) => withAuth(req, async (req, payload) =>
             );
         }
 
-        const jobs = body.map((job) => createCronJob(job, user));
-        const createdJobs = await Promise.all(jobs);
+        // トランザクション内で全ジョブを作成
+        const createdJobs = await Promise.all(body.map(job => createCronJob(job, user)));
 
-        // 各ジョブの作成を記録
+        // 各ジョブの作成を記録（トランザクション内で実行済み）
         await Promise.all(createdJobs.map(job => recordJobCreation(userId, job.id)));
 
         return createdResponse({
