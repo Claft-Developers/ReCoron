@@ -77,3 +77,31 @@ export const PUT = (async (req: NextRequest, context: Context) => withAuth(req, 
         return serverErrorResponse("Webhookの更新に失敗しました");
     }
 }, context));
+
+export const DELETE = (async (req: NextRequest, context: Context) => withAuth(req, async (req, payload) => {
+    const auth = getAuth(payload);
+    if (auth.type === "apiKey") {
+        const token = auth.payload as APIKeyPayload;
+        if (!token.scopes.includes("write:logs")) {
+            return unauthorizedResponse("このAPIキーにはWebhookの削除権限がありません");
+        }
+    }
+
+    const { jobId } = await context.params;
+
+    try {
+        const webhook = await prisma.webhookJobs.findFirst({
+            where: { jobId, userId: auth.userId }
+        });
+        if (!webhook) return notFoundResponse("指定されたWebhookが存在しません");
+        
+        await prisma.webhookJobs.delete({
+            where: { id: webhook.id }
+        });
+
+        return successResponse({ message: "Webhookを削除しました" });
+    } catch (error) {
+        console.error(`Error in DELETE /api/webhooks/${jobId}:`, error);
+        return serverErrorResponse("Webhookの削除に失敗しました");
+    }
+}, context));
