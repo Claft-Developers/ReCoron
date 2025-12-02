@@ -153,7 +153,7 @@ export async function executeCronJob(job: JobWithWebhook, type: Type = Type.AUTO
                     const payloadString = JSON.stringify(webhookPayload);
                     const signature = await generateWebhookSignature(payloadString, job.webhookJobs.secret);
 
-                    await fetch(job.webhookJobs.endpoint, {
+                    console.log(await fetch(job.webhookJobs.endpoint, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -162,7 +162,7 @@ export async function executeCronJob(job: JobWithWebhook, type: Type = Type.AUTO
                             ...((job.webhookJobs.headers || {}) as Record<string, string>),
                         },
                         body: payloadString,
-                    });
+                    }));
                     console.log(`Webhook sent for job ${job.id} to ${job.webhookJobs.endpoint}`);
                 } catch (webhookError) {
                     console.error(`Failed to send webhook for job ${job.id}:`, webhookError);
