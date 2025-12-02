@@ -149,6 +149,7 @@ export async function executeCronJob(job: JobWithWebhook, type: Type = Type.AUTO
             try {
                 // Webhookが設定されている場合、実行結果を送信
                 if (job.webhookJobs) {
+                    console.log(`Sending webhook for job ${job.id} to ${job.webhookJobs.endpoint}`);
                     try {
                         const payloadString = JSON.stringify(webhookPayload);
                         const signature = await generateWebhookSignature(payloadString, job.webhookJobs.secret);
