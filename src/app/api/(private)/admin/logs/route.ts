@@ -37,7 +37,7 @@ export async function DELETE(req: NextRequest) {
 
     const resetPromises = users.map((user) => {
         return prisma.runningLog.deleteMany({
-            where: { userId: user.id, createdAt: { lt: cutoffDate } }
+            where: { userId: user.id, createdAt: { lte: cutoffDate } }
         });
     });
     await Promise.all(resetPromises);

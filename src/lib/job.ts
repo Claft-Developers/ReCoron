@@ -134,20 +134,19 @@ export async function executeCronJob(job: JobWithWebhook, type: Type = Type.AUTO
             webhook: {
                 sendAt: new Date(),
             }
-
         };
+
+        // データベース操作をトランザクション内で実行
+        await prisma.$transaction([
+            prisma.runningLog.create({ data: payload }),
+            prisma.job.update({
+                where: { id: job.id },
+                data: updatePayload,
+            }),
+        ]);
 
         void (async () => { // 非同期で実行
             try {
-                // データベース操作をトランザクション内で実行
-                await prisma.$transaction([
-                    prisma.runningLog.create({ data: payload }),
-                    prisma.job.update({
-                        where: { id: job.id },
-                        data: updatePayload,
-                    }),
-                ]);
-
                 // Webhookが設定されている場合、実行結果を送信
                 if (job.webhookJobs) {
                     try {
