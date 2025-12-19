@@ -10,17 +10,42 @@ export default async function JobsPage() {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
-    const [jobs, logs] = await prisma.$transaction([
+    const userId = session!.user.id;
+
+    // Jobs とジョブログの集計を同時に取得して、不要なフルフェッチを避ける
+    const [jobs, runningLogGroups, failedGroups, totalLogs, totalFailedLogs] = await prisma.$transaction([
         prisma.job.findMany({
-            where: { userId: session!.user.id },
-            include: { runningLogs: true },
+            where: { userId },
+            select: {
+                id: true,
+                name: true,
+                method: true,
+                url: true,
+                schedule: true,
+                enabled: true,
+                nextRunAt: true,
+                lastRunAt: true,
+            },
             orderBy: { lastRunAt: "desc" },
         }),
-        prisma.runningLog.findMany({
-            where: { user: { id: session!.user.id } },
-            orderBy: { startedAt: "desc" },
-        })
+        prisma.runningLog.groupBy({
+            by: ["jobId"],
+            _count: { _all: true },
+            where: { userId },
+            orderBy: { jobId: "asc" },
+        }),
+        prisma.runningLog.groupBy({
+            by: ["jobId"],
+            _count: { _all: true },
+            where: { userId, successful: false },
+            orderBy: { jobId: "asc" },
+        }),
+        prisma.runningLog.count({ where: { userId } }),
+        prisma.runningLog.count({ where: { userId, successful: false } }),
     ]);
+
+    const totalByJob = new Map(runningLogGroups.map(g => [g.jobId, Number((g._count as any)?._all ?? 0)]));
+    const failedByJob = new Map(failedGroups.map(g => [g.jobId, Number((g._count as any)?._all ?? 0)]));
 
 
     return (
@@ -62,13 +87,13 @@ export default async function JobsPage() {
                         <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
                             <div className="text-sm text-gray-400 mb-1">総実行回数</div>
                             <div className="text-3xl font-bold">
-                                {logs.length}
+                                {totalLogs}
                             </div>
                         </div>
                         <div className="bg-white/[0.02] border border-white/10 rounded-lg p-4">
                             <div className="text-sm text-gray-400 mb-1">失敗回数</div>
                             <div className="text-3xl font-bold text-red-500">
-                                {logs.filter(log => !log.successful).length}
+                                {totalFailedLogs}
                             </div>
                         </div>
                     </div>
@@ -175,7 +200,14 @@ export default async function JobsPage() {
                                     </tr>
                                 ))} */}
                                 {jobs.map((job) => (
-                                    <JobTableRow key={job.id} job={job} />
+                                    <JobTableRow
+                                        key={job.id}
+                                        job={{
+                                            ...job,
+                                            runningLogCount: totalByJob.get(job.id) ?? 0,
+                                            runningLogFailureCount: failedByJob.get(job.id) ?? 0,
+                                        }}
+                                    />
                                 ))}
                             </tbody>
                         </table>
