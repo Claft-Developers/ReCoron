@@ -26,33 +26,12 @@ export const GET = ((req: NextRequest) => withAuth(req, async (req, payload) => 
         today.setHours(0, 0, 0, 0);
 
         // 並列でデータを取得
-        const [
+        const [todayHistory, [
             monthlyUsage,
             dailyUsage,
             currentJobs,
             currentApiKeys,
-            todayHistory,
-        ] = await Promise.all([
-            // 今月の使用量
-            prisma.monthlyUsage.findUnique({
-                where: {
-                    userId_year_month: { userId, year, month },
-                },
-            }),
-            // 今日の使用量
-            prisma.dailyUsage.findUnique({
-                where: {
-                    userId_date: { userId, date: today },
-                },
-            }),
-            // 現在のジョブ数
-            prisma.job.count({
-                where: { userId },
-            }),
-            // 現在のAPIキー数
-            prisma.aPIKey.count({
-                where: { userId },
-            }),
+        ]] = await Promise.all([
             // 今日のリソース履歴
             prisma.resourceHistory.groupBy({
                 by: ['resourceType', 'action'],
@@ -64,6 +43,28 @@ export const GET = ((req: NextRequest) => withAuth(req, async (req, payload) => 
                 },
                 _count: true,
             }),
+            prisma.$transaction([
+                // 今月の使用量
+                prisma.monthlyUsage.findUnique({
+                    where: {
+                        userId_year_month: { userId, year, month },
+                    },
+                }),
+                // 今日の使用量
+                prisma.dailyUsage.findUnique({
+                    where: {
+                        userId_date: { userId, date: today },
+                    },
+                }),
+                // 現在のジョブ数
+                prisma.job.count({
+                    where: { userId },
+                }),
+                // 現在のAPIキー数
+                prisma.aPIKey.count({
+                    where: { userId },
+                }),
+            ])
         ]);
 
         // リソース履歴を整形

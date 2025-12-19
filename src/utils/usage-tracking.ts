@@ -118,7 +118,7 @@ export async function checkJobCreationLimit(userId: string, userPlan: Plan): Pro
     });
 
     // 今日作成・削除されたジョブ数を取得
-    const [todayCreated, todayDeleted] = await Promise.all([
+    const [todayCreated, todayDeleted] = await prisma.$transaction([
         prisma.resourceHistory.count({
             where: {
                 userId,
@@ -210,7 +210,7 @@ export async function checkApiKeyCreationLimit(userId: string, userPlan: Plan): 
     });
 
     // 今日作成・削除されたAPIキー数を取得
-    const [todayCreated, todayDeleted] = await Promise.all([
+    const [todayCreated, todayDeleted] = await prisma.$transaction([
         prisma.resourceHistory.count({
             where: {
                 userId,

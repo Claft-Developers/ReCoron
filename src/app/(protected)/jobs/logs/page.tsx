@@ -25,13 +25,13 @@ export default async function CronLogsPage(context: Context) {
     const userId = session!.user.id;
     const type = params.type;
 
-    const [job, logs, allJobs] = await Promise.all([
-        jobId ? prisma.job.findUnique({
+    const [job, logs, allJobs] = await prisma.$transaction([
+        prisma.job.findUnique({
             where: {
                 id: jobId ? jobId : undefined,
                 userId: userId,
             }
-        }) : Promise.resolve(null),
+        }),
 
         prisma.runningLog.findMany({
             where: {

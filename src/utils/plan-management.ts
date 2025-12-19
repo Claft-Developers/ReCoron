@@ -306,7 +306,7 @@ export async function simulatePlanChange(userId: string, newPlan: Plan) {
     const newLimits = getPlanLimits(newPlan);
 
     // 現在の状態を取得
-    const [jobs, apiKeys] = await Promise.all([
+    const [jobs, apiKeys] = await prisma.$transaction([
         prisma.job.findMany({
             where: { userId, enabled: true },
             orderBy: { createdAt: 'asc' },

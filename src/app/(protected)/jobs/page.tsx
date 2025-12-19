@@ -10,7 +10,7 @@ export default async function JobsPage() {
     const session = await auth.api.getSession({
         headers: await headers(),
     });
-    const [jobs, logs] = await Promise.all([
+    const [jobs, logs] = await prisma.$transaction([
         prisma.job.findMany({
             where: { userId: session!.user.id },
             include: { runningLogs: true },

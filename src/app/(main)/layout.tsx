@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_DOMAIN = process.env.SITE_DOMAIN || "https://recoron.example.com";
+const SITE_DOMAIN = process.env.SITE_DOMAIN || "http://localhost:3000";
 const SITE_TITLE = "ReCoron — 安価で使える Cron Job as a Service";
 const SITE_DESCRIPTION =
   "ReCoronはダッシュボードとAPIでcronジョブを簡単に登録・管理できる、開発者向けの低コストなスケジューリングサービスです。Webhook、HTTPエンドポイント、柔軟な通知をサポートします。";
