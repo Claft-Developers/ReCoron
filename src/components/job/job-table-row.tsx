@@ -10,7 +10,12 @@ import { formatDate } from "@/utils/date";
 
 
 type JobTableRowProps = {
-    job: Job & { runningLogs: RunningLog[] };
+    // 部分的な Job を受け取れるようにし、集計カウントも許容する
+    job: Pick<Job, "id" | "name" | "method" | "url" | "schedule" | "enabled" | "nextRunAt" | "lastRunAt"> & {
+        runningLogs?: RunningLog[];
+        runningLogCount?: number;
+        runningLogFailureCount?: number;
+    };
 };
 
 export function JobTableRow({ job }: JobTableRowProps) {
@@ -18,6 +23,9 @@ export function JobTableRow({ job }: JobTableRowProps) {
     const [isDeleting, setIsDeleting] = useState<boolean>(false);
     const [isToggling, setIsToggling] = useState<boolean>(false);
     const [runningLogs] = useState<RunningLog[]>(job.runningLogs || []);
+
+    const runningCount = job.runningLogCount ?? runningLogs.length;
+    const failureCount = job.runningLogFailureCount ?? runningLogs.filter(l => !l.successful).length;
 
     const handleToggleEnabled = async () => {
         setIsToggling(true);
@@ -130,15 +138,15 @@ export function JobTableRow({ job }: JobTableRowProps) {
                 </div>
             </td>
             <td className="px-6 py-4">
-                <div className="text-sm">
-                    <div className="text-gray-300">{runningLogs.length} 回</div>
-                    {runningLogs.some(log => !log.successful) && (
-                        <div className="flex items-center gap-1 text-red-500">
-                            <XCircle className="w-3 h-3" />
-                            {runningLogs.filter(log => !log.successful).length} 失敗
-                        </div>
-                    )}
-                </div>
+                    <div className="text-sm">
+                        <div className="text-gray-300">{runningCount} 回</div>
+                        {failureCount > 0 && (
+                            <div className="flex items-center gap-1 text-red-500">
+                                <XCircle className="w-3 h-3" />
+                                {failureCount} 失敗
+                            </div>
+                        )}
+                    </div>
             </td>
             <td className="px-6 py-4">
                 <div className="text-sm text-gray-300">

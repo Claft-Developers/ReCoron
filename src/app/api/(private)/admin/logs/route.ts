@@ -40,7 +40,7 @@ export async function DELETE(req: NextRequest) {
             where: { userId: user.id, createdAt: { lte: cutoffDate } }
         });
     });
-    await Promise.all(resetPromises);
+    await prisma.$transaction(resetPromises);
 
     return successResponse(null, "Monthly job counts reset");
 }

@@ -37,14 +37,15 @@ export async function GET(req: NextRequest) {
             totalApiKeys,
             totalExecutions,
             planCounts
-        ] = await Promise.all([
+        ] = await prisma.$transaction([
             prisma.user.count(),
             prisma.job.count(),
             prisma.aPIKey.count(),
             prisma.runningLog.count(),
             prisma.user.groupBy({
                 by: ['plan'],
-                _count: true,
+                _count: { _all: true },
+                orderBy: { plan: 'asc' },
             })
         ]);
 
@@ -56,7 +57,13 @@ export async function GET(req: NextRequest) {
         };
 
         planCounts.forEach((item) => {
-            planDistribution[item.plan] = item._count;
+            if (item.plan) {
+                const count =
+                    typeof item._count === "object" && item._count !== null && typeof (item._count as any)._all === "number"
+                        ? (item._count as { _all?: number })._all ?? 0
+                        : 0;
+                planDistribution[item.plan as Plan] = count;
+            }
         });
 
         return successResponse({
